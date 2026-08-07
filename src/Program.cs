@@ -59,17 +59,8 @@ namespace WheelFix
 
         private static bool HasArgument(string[] args, string expected)
         {
-            int index;
-            for (index = 0; index < args.Length; index++)
-            {
-                if (string.Equals(args[index], expected,
-                    StringComparison.OrdinalIgnoreCase))
-                {
-                    return true;
-                }
-            }
-
-            return false;
+            return Array.Exists(args, value => string.Equals(
+                value, expected, StringComparison.OrdinalIgnoreCase));
         }
     }
 
@@ -192,7 +183,6 @@ namespace WheelFix
         private ToolStripMenuItem CreatePresetMenuItem(string text, int windowMs)
         {
             ToolStripMenuItem item = new ToolStripMenuItem(text);
-            item.Tag = windowMs;
             item.Click += delegate { SetWindow(windowMs); };
             return item;
         }
@@ -207,8 +197,8 @@ namespace WheelFix
 
         private void SetWindow(int windowMs)
         {
-            _settings.WindowMs = Math.Max(10, Math.Min(150, windowMs));
-            _filter.WindowMs = _settings.WindowMs;
+            _filter.WindowMs = windowMs;
+            _settings.WindowMs = _filter.WindowMs;
             SaveSettings();
             SyncUi();
         }
