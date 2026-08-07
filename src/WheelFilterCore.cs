@@ -21,11 +21,9 @@ namespace WheelFix
 
         private bool _enabled;
         private int _windowMs;
-        private bool _hasAcceptedEvent;
         private int _lastAcceptedDirection;
         private uint _lastAcceptedTime;
         private int _pendingOppositeDirection;
-        private uint _pendingOppositeTime;
         private long _blockedCount;
 
         public WheelFilterCore(bool enabled, int windowMs)
@@ -84,7 +82,7 @@ namespace WheelFix
 
             int direction = delta > 0 ? 1 : -1;
 
-            if (!_hasAcceptedEvent)
+            if (_lastAcceptedDirection == 0)
             {
                 Accept(direction, timestamp);
                 return WheelFilterDecision.Allow;
@@ -106,35 +104,28 @@ namespace WheelFix
             // A second consecutive pulse in the new direction confirms a real
             // fast reversal. Only the first pulse is sacrificed; no synthetic
             // mouse input is ever generated.
-            if (_pendingOppositeDirection == direction &&
-                Elapsed(timestamp, _pendingOppositeTime) <= (uint)_windowMs)
+            if (_pendingOppositeDirection == direction)
             {
                 Accept(direction, timestamp);
                 return WheelFilterDecision.Allow;
             }
 
             _pendingOppositeDirection = direction;
-            _pendingOppositeTime = timestamp;
             Interlocked.Increment(ref _blockedCount);
             return WheelFilterDecision.Block;
         }
 
         private void Accept(int direction, uint timestamp)
         {
-            _hasAcceptedEvent = true;
             _lastAcceptedDirection = direction;
             _lastAcceptedTime = timestamp;
             _pendingOppositeDirection = 0;
-            _pendingOppositeTime = 0U;
         }
 
         private void ResetHistory()
         {
-            _hasAcceptedEvent = false;
             _lastAcceptedDirection = 0;
-            _lastAcceptedTime = 0U;
             _pendingOppositeDirection = 0;
-            _pendingOppositeTime = 0U;
         }
 
         private static uint Elapsed(uint current, uint previous)
