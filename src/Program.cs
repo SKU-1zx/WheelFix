@@ -9,9 +9,9 @@ using System.Windows.Forms;
 [assembly: AssemblyCompany("SKU-1zx")]
 [assembly: AssemblyProduct("WheelFix")]
 [assembly: AssemblyCopyright("Copyright © 2026 SKU-1zx")]
-[assembly: AssemblyVersion("0.1.0.0")]
-[assembly: AssemblyFileVersion("0.1.0.0")]
-[assembly: AssemblyInformationalVersion("0.1.0")]
+[assembly: AssemblyVersion("0.1.1.0")]
+[assembly: AssemblyFileVersion("0.1.1.0")]
+[assembly: AssemblyInformationalVersion("0.1.1")]
 
 namespace WheelFix
 {
