@@ -1,0 +1,44 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  build-and-test:
+    runs-on: windows-latest
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v7
+
+      - name: Run filter-core tests
+        shell: cmd
+        run: test.cmd --ci
+
+      - name: Build portable executable
+        shell: cmd
+        run: build.cmd --ci
+
+      - name: Add MSBuild to PATH
+        uses: microsoft/setup-msbuild@v3
+
+      - name: Validate Visual Studio project
+        shell: cmd
+        run: msbuild WheelFix.csproj /t:Rebuild /p:Configuration=Release
+
+      - name: Upload Windows build
+        uses: actions/upload-artifact@v7
+        with:
+          name: WheelFix-windows
+          path: |
+            dist/WheelFix.exe
+            dist/README.md
+            dist/README.it.md
+            dist/LICENSE
+          if-no-files-found: error

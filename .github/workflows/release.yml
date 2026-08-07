@@ -1,0 +1,87 @@
+name: Windows release
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: Release tag
+        required: true
+        default: v0.1.0
+
+permissions:
+  contents: write
+
+concurrency:
+  group: windows-release
+  cancel-in-progress: false
+
+jobs:
+  release:
+    runs-on: windows-latest
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v7
+
+      - name: Run filter-core tests
+        shell: cmd
+        run: test.cmd --ci
+
+      - name: Build portable executable
+        shell: cmd
+        run: build.cmd --ci
+
+      - name: Package release
+        shell: pwsh
+        run: |
+          $tag = "${{ inputs.tag }}"
+          if ([string]::IsNullOrWhiteSpace($tag)) {
+            $tag = "v0.1.0"
+          }
+
+          $releaseDir = Join-Path $PWD "release-package"
+          New-Item -ItemType Directory -Path $releaseDir -Force | Out-Null
+          Copy-Item "dist/WheelFix.exe" $releaseDir
+          Copy-Item "README.md" $releaseDir
+          Copy-Item "README.it.md" $releaseDir
+          Copy-Item "LICENSE" $releaseDir
+
+          $zip = Join-Path $PWD "dist/WheelFix-$tag-windows.zip"
+          Compress-Archive -Path "$releaseDir/*" -DestinationPath $zip -Force
+
+          $checksum = "$zip.sha256"
+          $hash = (Get-FileHash -Algorithm SHA256 $zip).Hash.ToLowerInvariant()
+          "$hash  $(Split-Path -Leaf $zip)" | Set-Content -Encoding ascii $checksum
+
+          "RELEASE_TAG=$tag" | Out-File -FilePath $env:GITHUB_ENV -Append
+          "RELEASE_ZIP=$zip" | Out-File -FilePath $env:GITHUB_ENV -Append
+          "RELEASE_SHA256=$checksum" | Out-File -FilePath $env:GITHUB_ENV -Append
+
+      - name: Upload packaged build
+        uses: actions/upload-artifact@v7
+        with:
+          name: WheelFix-release
+          path: |
+            ${{ env.RELEASE_ZIP }}
+            ${{ env.RELEASE_SHA256 }}
+          if-no-files-found: error
+
+      - name: Create GitHub release if missing
+        shell: pwsh
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release view $env:RELEASE_TAG 2>$null 1>$null
+          if ($LASTEXITCODE -eq 0) {
+            Write-Host "Release $env:RELEASE_TAG already exists; nothing to replace."
+            exit 0
+          }
+
+          gh release create $env:RELEASE_TAG `
+            $env:RELEASE_ZIP `
+            $env:RELEASE_SHA256 `
+            --target $env:GITHUB_SHA `
+            --title "WheelFix $env:RELEASE_TAG" `
+            --notes-file "docs/release-v0.1.0.md"

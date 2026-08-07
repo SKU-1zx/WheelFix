@@ -1,0 +1,83 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1040" height="884"
+     viewBox="0 0 1040 884">
+  <defs>
+    <linearGradient id="page" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#dbeafe" />
+      <stop offset="1" stop-color="#f1f5f9" />
+    </linearGradient>
+  </defs>
+
+  <rect width="1040" height="884" fill="url(#page)" />
+  <rect x="116" y="88" width="808" height="748" rx="18"
+        fill="#0f172a" opacity=".15" />
+  <g transform="translate(100 64)">
+    <rect width="840" height="756" rx="12" fill="#f7f9fc" />
+    <path d="M12 0h816a12 12 0 0 1 12 12v118H0V12A12 12 0 0 1 12 0Z"
+          fill="#111827" />
+
+    <text x="36" y="58" fill="#fff" font-family="Segoe UI, Arial, sans-serif"
+          font-size="42" font-weight="700">WheelFix</text>
+    <text x="38" y="98" fill="#b4becd" font-family="Segoe UI, Arial, sans-serif"
+          font-size="17">Mouse wheel debounce filter for Windows</text>
+
+    <rect x="38" y="166" width="22" height="22" rx="4" fill="#2563eb" />
+    <path d="m43 177 5 5 9-11" fill="none" stroke="#fff" stroke-width="3"
+          stroke-linecap="round" stroke-linejoin="round" />
+    <text x="72" y="185" fill="#111827" font-family="Segoe UI, Arial, sans-serif"
+          font-size="22" font-weight="600">Filter enabled</text>
+
+    <rect x="658" y="160" width="142" height="34" rx="7" fill="#dcfce7" />
+    <text x="729" y="183" text-anchor="middle" fill="#15803d"
+          font-family="Segoe UI, Arial, sans-serif" font-size="16"
+          font-weight="700">ACTIVE</text>
+
+    <text x="38" y="255" fill="#111827" font-family="Segoe UI, Arial, sans-serif"
+          font-size="18" font-weight="600">Debounce window</text>
+    <text x="800" y="255" text-anchor="end" fill="#374151"
+          font-family="Segoe UI, Arial, sans-serif" font-size="17">55 ms</text>
+
+    <rect x="44" y="287" width="744" height="6" rx="3" fill="#d1d5db" />
+    <rect x="44" y="287" width="260" height="6" rx="3" fill="#2563eb" />
+    <circle cx="304" cy="290" r="13" fill="#2563eb" stroke="#fff" stroke-width="4" />
+
+    <g font-family="Segoe UI, Arial, sans-serif" font-size="16" fill="#374151">
+      <rect x="38" y="340" width="228" height="52" rx="6" fill="#fff"
+            stroke="#c3cad5" />
+      <text x="152" y="373" text-anchor="middle">Light  25 ms</text>
+      <rect x="306" y="340" width="228" height="52" rx="6" fill="#eff6ff"
+            stroke="#2563eb" stroke-width="2" />
+      <text x="420" y="373" text-anchor="middle" fill="#1d4ed8"
+            font-weight="600">Balanced  55 ms</text>
+      <rect x="574" y="340" width="228" height="52" rx="6" fill="#fff"
+            stroke="#c3cad5" />
+      <text x="688" y="373" text-anchor="middle">Strong  90 ms</text>
+    </g>
+
+    <text x="38" y="440" fill="#4b5563" font-family="Segoe UI, Arial, sans-serif"
+          font-size="16">
+      <tspan x="38">A larger window catches slower bounce, but may discard the first notch</tspan>
+      <tspan x="38" dy="25">when you reverse direction very quickly. Start with Balanced.</tspan>
+    </text>
+
+    <rect x="38" y="507" width="764" height="1" fill="#dce1e9" />
+    <rect x="38" y="542" width="22" height="22" rx="4" fill="#2563eb" />
+    <path d="m43 553 5 5 9-11" fill="none" stroke="#fff" stroke-width="3"
+          stroke-linecap="round" stroke-linejoin="round" />
+    <text x="72" y="561" fill="#111827" font-family="Segoe UI, Arial, sans-serif"
+          font-size="17">Start automatically with Windows</text>
+
+    <text x="38" y="627" fill="#111827" font-family="Segoe UI, Arial, sans-serif"
+          font-size="17">Bad pulses blocked:</text>
+    <text x="212" y="627" fill="#111827" font-family="Segoe UI, Arial, sans-serif"
+          font-size="17" font-weight="700">27</text>
+    <rect x="256" y="600" width="82" height="40" rx="5" fill="#fff"
+          stroke="#c3cad5" />
+    <text x="297" y="626" text-anchor="middle" fill="#374151"
+          font-family="Segoe UI, Arial, sans-serif" font-size="15">Reset</text>
+
+    <rect x="492" y="672" width="310" height="54" rx="6" fill="#2563eb" />
+    <text x="647" y="706" text-anchor="middle" fill="#fff"
+          font-family="Segoe UI, Arial, sans-serif" font-size="17"
+          font-weight="600">Hide to notification area</text>
+  </g>
+</svg>
