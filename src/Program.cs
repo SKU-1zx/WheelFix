@@ -9,9 +9,9 @@ using System.Windows.Forms;
 [assembly: AssemblyCompany("SKU-1zx")]
 [assembly: AssemblyProduct("WheelFix")]
 [assembly: AssemblyCopyright("Copyright © 2026 SKU-1zx")]
-[assembly: AssemblyVersion("0.1.1.0")]
-[assembly: AssemblyFileVersion("0.1.1.0")]
-[assembly: AssemblyInformationalVersion("0.1.1")]
+[assembly: AssemblyVersion("0.2.0.0")]
+[assembly: AssemblyFileVersion("0.2.0.0")]
+[assembly: AssemblyInformationalVersion("0.2.0")]
 
 namespace WheelFix
 {
@@ -40,12 +40,18 @@ namespace WheelFix
                 Application.SetCompatibleTextRenderingDefault(false);
 
                 bool startedWithWindows = HasArgument(args, "--startup");
+                DiagnosticLog.Write(
+                    "WheelFix " + Application.ProductVersion +
+                    " starting; launch=" +
+                    (startedWithWindows ? "Windows startup" : "interactive") + ".");
                 try
                 {
                     Application.Run(new WheelFixContext(startedWithWindows));
                 }
                 catch (Exception ex)
                 {
+                    DiagnosticLog.Write(
+                        "Fatal error (" + ex.GetType().Name + "): " + ex.Message);
                     MessageBox.Show(
                         L.Text(
                             "WheelFix could not start.\r\n\r\n",
@@ -79,6 +85,7 @@ namespace WheelFix
         private readonly ToolStripMenuItem _balancedMenuItem;
         private readonly ToolStripMenuItem _strongMenuItem;
         private readonly System.Windows.Forms.Timer _statsTimer;
+        private long _lastLoggedBlockedCount;
         private bool _disposed;
 
         public WheelFixContext(bool startedWithWindows)
@@ -87,6 +94,10 @@ namespace WheelFix
             _filter = new WheelFilterCore(_settings.Enabled, _settings.WindowMs);
             _mouseHook = new NativeMouseHook(_filter);
             _icon = TrayIconFactory.Create();
+            DiagnosticLog.Write(
+                "Settings loaded: filter=" +
+                (_settings.Enabled ? "enabled" : "paused") +
+                ", debounce=" + _settings.WindowMs + " ms.");
 
             _form = new MainForm(
                 _icon,
@@ -132,6 +143,11 @@ namespace WheelFix
                 SetStartup(!AppSettings.IsStartupEnabled());
             };
             _menu.Items.Add(_startupMenuItem);
+
+            ToolStripMenuItem openLogItem = new ToolStripMenuItem(
+                L.Text("Open diagnostic log", "Apri log diagnostico"));
+            openLogItem.Click += delegate { OpenDiagnosticLog(); };
+            _menu.Items.Add(openLogItem);
             _menu.Items.Add(new ToolStripSeparator());
 
             ToolStripMenuItem exitItem = new ToolStripMenuItem(
@@ -149,11 +165,23 @@ namespace WheelFix
             _statsTimer.Interval = 250;
             _statsTimer.Tick += delegate
             {
-                _form.UpdateBlockedCount(_filter.BlockedCount);
+                long blocked = _filter.BlockedCount;
+                _form.UpdateBlockedCount(blocked);
+
+                if (blocked > _lastLoggedBlockedCount)
+                {
+                    DiagnosticLog.Write(
+                        "Blocked bad pulses: delta=" +
+                        (blocked - _lastLoggedBlockedCount) +
+                        "; total=" + blocked + ".");
+                }
+
+                _lastLoggedBlockedCount = blocked;
             };
             _statsTimer.Start();
 
             _mouseHook.Start();
+            DiagnosticLog.Write("Global mouse hook installed.");
             SyncUi();
 
             if (!startedWithWindows)
@@ -167,14 +195,19 @@ namespace WheelFix
             if (!_disposed)
             {
                 _disposed = true;
+                DiagnosticLog.Write(
+                    "WheelFix stopping; blocked_total=" +
+                    _filter.BlockedCount + ".");
                 _statsTimer.Stop();
                 _statsTimer.Dispose();
                 _notifyIcon.Visible = false;
                 _notifyIcon.Dispose();
                 _menu.Dispose();
                 _mouseHook.Dispose();
+                DiagnosticLog.Write("Global mouse hook removed.");
                 _form.Dispose();
                 _icon.Dispose();
+                DiagnosticLog.Write("WheelFix stopped.");
             }
 
             base.ExitThreadCore();
@@ -192,6 +225,8 @@ namespace WheelFix
             _settings.Enabled = enabled;
             _filter.Enabled = enabled;
             SaveSettings();
+            DiagnosticLog.Write(
+                enabled ? "Filter enabled." : "Filter paused.");
             SyncUi();
         }
 
@@ -200,6 +235,8 @@ namespace WheelFix
             _filter.WindowMs = windowMs;
             _settings.WindowMs = _filter.WindowMs;
             SaveSettings();
+            DiagnosticLog.Write(
+                "Debounce window changed to " + _settings.WindowMs + " ms.");
             SyncUi();
         }
 
@@ -208,9 +245,16 @@ namespace WheelFix
             try
             {
                 AppSettings.SetStartupEnabled(enabled, Application.ExecutablePath);
+                DiagnosticLog.Write(
+                    enabled
+                        ? "Windows startup enabled."
+                        : "Windows startup disabled.");
             }
             catch (Exception ex)
             {
+                DiagnosticLog.Write(
+                    "Could not change Windows startup (" +
+                    ex.GetType().Name + "): " + ex.Message);
                 MessageBox.Show(
                     L.Text(
                         "Could not change the startup setting.\r\n\r\n",
@@ -226,8 +270,35 @@ namespace WheelFix
 
         private void ResetCounter()
         {
+            long previousCount = _filter.BlockedCount;
             _filter.ResetBlockedCount();
+            _lastLoggedBlockedCount = 0L;
+            DiagnosticLog.Write(
+                "Blocked-pulse counter reset; previous total=" +
+                previousCount + ".");
             SyncUi();
+        }
+
+        private void OpenDiagnosticLog()
+        {
+            try
+            {
+                DiagnosticLog.Open();
+            }
+            catch (Exception ex)
+            {
+                DiagnosticLog.Write(
+                    "Could not open diagnostic log (" +
+                    ex.GetType().Name + "): " + ex.Message);
+                MessageBox.Show(
+                    L.Text(
+                        "Could not open the diagnostic log.\r\n\r\n",
+                        "Non riesco ad aprire il log diagnostico.\r\n\r\n") +
+                        ex.Message,
+                    "WheelFix",
+                    MessageBoxButtons.OK,
+                    MessageBoxIcon.Warning);
+            }
         }
 
         private void SaveSettings()
@@ -238,6 +309,9 @@ namespace WheelFix
             }
             catch (Exception ex)
             {
+                DiagnosticLog.Write(
+                    "Could not save settings (" + ex.GetType().Name +
+                    "): " + ex.Message);
                 MessageBox.Show(
                     L.Text(
                         "The filter remains active, but its settings could " +

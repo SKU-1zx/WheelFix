@@ -21,6 +21,7 @@ applications receive them.
 - Light, Balanced and Strong presets.
 - Counter showing how many bad pulses were blocked.
 - Notification-area controls and optional startup with Windows.
+- Local diagnostic log, available directly from the notification-area menu.
 - Automatic English/Italian interface based on the Windows display language.
 - No installer, driver, telemetry, network access or administrator privileges.
 - No synthetic mouse events: accepted input remains the original hardware input.
@@ -34,7 +35,8 @@ applications receive them.
 4. Start with **Balanced (55 ms)** and use the wheel normally.
 
 Closing the window keeps WheelFix active in the notification area. Right-click
-its icon to pause the filter, change strength, enable startup or exit.
+its icon to pause the filter, change strength, enable startup, open the
+diagnostic log or exit.
 
 ## Tuning
 
@@ -61,6 +63,17 @@ Another pulse in that new direction confirms a real reversal and is allowed.
 
 Mouse movement, buttons, horizontal scrolling and injected events from other
 software are left untouched. WheelFix never calls `SendInput`.
+
+## Diagnostic log
+
+Choose **Open diagnostic log** from the notification-area menu to open:
+
+`%LOCALAPPDATA%\WheelFix\WheelFix.log`
+
+The log records WheelFix startup and shutdown, hook status, setting changes,
+errors and grouped counts of blocked pulses. It does **not** record mouse
+movement, clicks, application names or accepted wheel events. Nothing is sent
+over the network. The file is reset automatically before it exceeds 1 MB.
 
 ## Limitations
 
@@ -103,7 +116,8 @@ current user's `HKCU\Software\Microsoft\Windows\CurrentVersion\Run` key.
 Preferences are stored under `HKCU\Software\WheelFix`.
 
 To remove WheelFix, disable startup, choose **Exit** from the notification-area
-menu and delete its folder.
+menu and delete its folder. Delete `%LOCALAPPDATA%\WheelFix` too if you also
+want to remove the diagnostic log.
 
 ## Contributing
 
