@@ -30,10 +30,13 @@ namespace WheelFix
                     }
                 }
             }
-            catch
+            catch (Exception ex)
             {
                 // Registry settings are a convenience. Safe defaults keep the
                 // filter usable even if a policy blocks this key.
+                DiagnosticLog.Write(
+                    "Could not load settings; using safe defaults (" +
+                    ex.GetType().Name + "): " + ex.Message);
             }
 
             return settings;

@@ -21,6 +21,7 @@ applicazioni Windows.
 - Preset Leggero, Bilanciato e Forte.
 - Contatore degli impulsi errati bloccati.
 - Controlli nella tray e avvio facoltativo con Windows.
+- Log diagnostico locale, apribile direttamente dal menu della tray.
 - Interfaccia automatica italiano/inglese in base alla lingua di Windows.
 - Nessun installer, driver, telemetria, rete o privilegio amministrativo.
 - Nessun input sintetico: gli eventi accettati restano quelli originali del mouse.
@@ -35,7 +36,7 @@ applicazioni Windows.
 
 Chiudendo la finestra WheelFix resta attivo nell'area di notifica. Con il tasto
 destro sull'icona puoi mettere in pausa il filtro, cambiare intensità, attivare
-l'avvio automatico o uscire.
+l'avvio automatico, aprire il log diagnostico o uscire.
 
 ## Regolazione
 
@@ -61,6 +62,18 @@ Un altro impulso nella nuova direzione conferma un'inversione reale e passa.
 
 Movimento, pulsanti, scorrimento orizzontale ed eventi iniettati da altri
 software non vengono toccati. WheelFix non usa mai `SendInput`.
+
+## Log diagnostico
+
+Scegli **Apri log diagnostico** dal menu della tray per aprire:
+
+`%LOCALAPPDATA%\WheelFix\WheelFix.log`
+
+Il log registra avvio e arresto di WheelFix, stato dell'hook, modifiche alle
+impostazioni, errori e conteggi raggruppati degli impulsi bloccati. **Non**
+registra movimenti del mouse, clic, nomi delle applicazioni o eventi della
+rotellina accettati. Nulla viene inviato in rete. Il file viene azzerato
+automaticamente prima di superare 1 MB.
 
 ## Limiti
 
@@ -103,7 +116,8 @@ chiave dell'utente corrente
 salvate in `HKCU\Software\WheelFix`.
 
 Per rimuovere WheelFix, disattiva l'avvio automatico, scegli **Esci** dalla tray
-ed elimina la cartella.
+ed elimina la cartella. Se vuoi rimuovere anche il log diagnostico, elimina
+`%LOCALAPPDATA%\WheelFix`.
 
 ## Contributi
 

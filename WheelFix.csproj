@@ -46,6 +46,7 @@
 
   <ItemGroup>
     <Compile Include="src\AppSettings.cs" />
+    <Compile Include="src\DiagnosticLog.cs" />
     <Compile Include="src\Localization.cs" />
     <Compile Include="src\MainForm.cs" />
     <Compile Include="src\NativeMouseHook.cs" />

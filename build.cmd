@@ -28,6 +28,7 @@ echo Building WheelFix...
   /reference:System.Windows.Forms.dll ^
   src\WheelFilterCore.cs ^
   src\AppSettings.cs ^
+  src\DiagnosticLog.cs ^
   src\Localization.cs ^
   src\NativeMouseHook.cs ^
   src\MainForm.cs ^

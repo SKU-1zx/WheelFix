@@ -2,6 +2,19 @@
 
 All notable changes to WheelFix are documented in this file.
 
+## [0.2.0] - 2026-08-18
+
+### Added
+
+- Local diagnostic logging for lifecycle, hook status, settings, errors and
+  grouped blocked-pulse counts.
+- Notification-area command to open the diagnostic log.
+
+### Privacy
+
+- The log stays under `%LOCALAPPDATA%`, never records individual mouse events
+  or application names, and resets automatically at 1 MB.
+
 ## [0.1.1] - 2026-08-08
 
 ### Changed
