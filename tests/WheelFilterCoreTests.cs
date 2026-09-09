@@ -11,7 +11,7 @@ namespace WheelFix
             FirstEventAndSameDirectionAreAllowed();
             FastOppositePulseIsBlocked();
             OriginalDirectionCancelsTheFalseReversal();
-            OppositeBurstIsBlockedForTheWholeWindow();
+            ThirdOppositePulseConfirmsARealReversal();
             SlowDirectionChangeIsAllowed();
             DisabledFilterAllowsEverything();
             TimestampWrapIsHandled();
@@ -41,20 +41,20 @@ namespace WheelFix
             WheelFilterCore filter = NewFilter();
             filter.Process(-120, 100U);
             AssertDecision(WheelFilterDecision.Block, filter.Process(120, 115U));
+            AssertDecision(WheelFilterDecision.Block, filter.Process(120, 120U));
             AssertDecision(WheelFilterDecision.Allow, filter.Process(-120, 125U));
             AssertDecision(WheelFilterDecision.Block, filter.Process(120, 140U));
         }
 
-        private static void OppositeBurstIsBlockedForTheWholeWindow()
+        private static void ThirdOppositePulseConfirmsARealReversal()
         {
             WheelFilterCore filter = NewFilter();
             filter.Process(-120, 100U);
             AssertDecision(WheelFilterDecision.Block, filter.Process(120, 120U));
             AssertDecision(WheelFilterDecision.Block, filter.Process(120, 135U));
-            AssertDecision(WheelFilterDecision.Block, filter.Process(120, 150U));
-            AssertDecision(WheelFilterDecision.Allow, filter.Process(120, 156U));
-            AssertDecision(WheelFilterDecision.Allow, filter.Process(120, 170U));
-            AssertEqual(3L, filter.BlockedCount);
+            AssertDecision(WheelFilterDecision.Allow, filter.Process(120, 150U));
+            AssertDecision(WheelFilterDecision.Allow, filter.Process(120, 165U));
+            AssertEqual(2L, filter.BlockedCount);
         }
 
         private static void SlowDirectionChangeIsAllowed()

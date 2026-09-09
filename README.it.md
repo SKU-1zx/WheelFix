@@ -46,10 +46,10 @@ l'avvio automatico, aprire il log diagnostico o uscire.
 | Bilanciato | 55 ms | Impostazione iniziale consigliata |
 | Forte | 90 ms | Rimbalzi frequenti o più lenti |
 
-Una finestra più alta elimina rimbalzi più lenti, ma può scartare gli scatti che
-cadono dentro la finestra quando inverti volontariamente direzione molto
-velocemente. Usa il valore più basso che elimina in modo affidabile i salti
-indesiderati.
+Una finestra più alta elimina rimbalzi più lenti, ma può scartare i primi due
+scatti quando inverti volontariamente direzione molto velocemente. Un terzo
+scatto consecutivo conferma subito la nuova direzione. Usa il valore più basso
+che elimina in modo affidabile i salti indesiderati.
 
 Il contatore **Impulsi errati bloccati** conferma se il filtro sta intervenendo.
 Se aumenta mentre il salto indesiderato sparisce, l'impostazione è corretta.
@@ -57,9 +57,10 @@ Se aumenta mentre il salto indesiderato sparisce, l'impostazione è corretta.
 ## Come funziona
 
 WheelFix installa un normale hook utente `WH_MOUSE_LL` e osserva soltanto i
-messaggi della rotellina verticale. Gli impulsi contrari all'ultima direzione
-accettata vengono bloccati per tutta la finestra selezionata. La nuova direzione
-viene accettata appena termina quella breve finestra.
+messaggi della rotellina verticale. I primi due impulsi contrari all'ultima
+direzione accettata vengono bloccati dentro la finestra selezionata. Un terzo
+impulso consecutivo conferma subito la nuova direzione; un cambio di direzione
+dopo la finestra viene accettato senza conferme.
 
 Movimento, pulsanti, scorrimento orizzontale ed eventi iniettati da altri
 software non vengono toccati. WheelFix non usa mai `SendInput`.
