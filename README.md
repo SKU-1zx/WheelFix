@@ -46,9 +46,9 @@ diagnostic log or exit.
 | Balanced | 55 ms | Recommended starting point |
 | Strong | 90 ms | Frequent or slower bounce |
 
-A larger window catches slower bounce, but it may discard the first notch when
-you intentionally reverse direction very quickly. A second consecutive notch
-in the new direction is accepted immediately.
+A larger window catches slower bounce, but it may discard the notches that land
+inside the window when you intentionally reverse direction very quickly. Use
+the smallest value that reliably removes the unwanted jumps.
 
 The **Bad pulses blocked** counter confirms whether the filter is actually
 intervening. If the counter increases while the unwanted jump disappears, the
@@ -57,9 +57,9 @@ setting is doing its job.
 ## How it works
 
 WheelFix installs a standard `WH_MOUSE_LL` user-mode hook and observes only
-vertical wheel messages. A pulse opposite to the most recently accepted
-direction is blocked when it arrives inside the selected debounce window.
-Another pulse in that new direction confirms a real reversal and is allowed.
+vertical wheel messages. Pulses opposite to the most recently accepted
+direction are blocked for the selected debounce window. The new direction is
+accepted once that short window expires.
 
 Mouse movement, buttons, horizontal scrolling and injected events from other
 software are left untouched. WheelFix never calls `SendInput`.

@@ -23,7 +23,6 @@ namespace WheelFix
         private int _windowMs;
         private int _lastAcceptedDirection;
         private uint _lastAcceptedTime;
-        private int _pendingOppositeDirection;
         private long _blockedCount;
 
         public WheelFilterCore(bool enabled, int windowMs)
@@ -101,16 +100,9 @@ namespace WheelFix
                 return WheelFilterDecision.Allow;
             }
 
-            // A second consecutive pulse in the new direction confirms a real
-            // fast reversal. Only the first pulse is sacrificed; no synthetic
-            // mouse input is ever generated.
-            if (_pendingOppositeDirection == direction)
-            {
-                Accept(direction, timestamp);
-                return WheelFilterDecision.Allow;
-            }
-
-            _pendingOppositeDirection = direction;
+            // A worn encoder can emit several bad pulses in a row. Keep the
+            // accepted direction locked for the whole debounce window instead
+            // of treating the second opposite pulse as a real reversal.
             Interlocked.Increment(ref _blockedCount);
             return WheelFilterDecision.Block;
         }
@@ -119,13 +111,11 @@ namespace WheelFix
         {
             _lastAcceptedDirection = direction;
             _lastAcceptedTime = timestamp;
-            _pendingOppositeDirection = 0;
         }
 
         private void ResetHistory()
         {
             _lastAcceptedDirection = 0;
-            _pendingOppositeDirection = 0;
         }
 
         private static uint Elapsed(uint current, uint previous)

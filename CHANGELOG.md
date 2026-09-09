@@ -2,6 +2,13 @@
 
 All notable changes to WheelFix are documented in this file.
 
+## [Unreleased]
+
+### Changed
+
+- Opposite-direction bursts are now blocked for the entire debounce window,
+  preventing multiple consecutive encoder errors from leaking through.
+
 ## [0.2.0] - 2026-08-18
 
 ### Added
