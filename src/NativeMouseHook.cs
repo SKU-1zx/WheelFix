@@ -78,12 +78,21 @@ namespace WheelFix
                 if ((data.Flags & LlmhfInjected) == 0U)
                 {
                     int delta = unchecked((short)(data.MouseData >> 16));
+                    int replayDelta;
                     WheelFilterDecision decision =
-                        _filter.Process(delta, data.Time);
-                    _traceEvents.Enqueue(new WheelTraceEvent(
-                        data.Time, delta, decision));
+                        _filter.Process(delta, out replayDelta);
 
-                    if (decision == WheelFilterDecision.Block)
+                    if (decision == WheelFilterDecision.Replay &&
+                        !NativeMethods.SendWheelInput(replayDelta))
+                    {
+                        decision = WheelFilterDecision.ReplayFailed;
+                    }
+
+                    _traceEvents.Enqueue(new WheelTraceEvent(
+                        data.Time, delta, decision, replayDelta));
+
+                    if (decision == WheelFilterDecision.Block ||
+                        decision == WheelFilterDecision.Replay)
                     {
                         return new IntPtr(1);
                     }
@@ -99,20 +108,26 @@ namespace WheelFix
         internal readonly uint Timestamp;
         internal readonly int Delta;
         internal readonly WheelFilterDecision Decision;
+        internal readonly int ReplayDelta;
 
         internal WheelTraceEvent(
             uint timestamp,
             int delta,
-            WheelFilterDecision decision)
+            WheelFilterDecision decision,
+            int replayDelta)
         {
             Timestamp = timestamp;
             Delta = delta;
             Decision = decision;
+            ReplayDelta = replayDelta;
         }
     }
 
     internal static class NativeMethods
     {
+        private const uint InputMouse = 0U;
+        private const uint MouseEventWheel = 0x0800U;
+
         internal delegate IntPtr LowLevelMouseProc(
             int nCode, IntPtr wParam, IntPtr lParam);
 
@@ -133,6 +148,40 @@ namespace WheelFix
             internal UIntPtr ExtraInfo;
         }
 
+        [StructLayout(LayoutKind.Sequential)]
+        internal struct Input
+        {
+            internal uint Type;
+            internal InputUnion Data;
+        }
+
+        [StructLayout(LayoutKind.Explicit)]
+        internal struct InputUnion
+        {
+            [FieldOffset(0)]
+            internal MouseInput Mouse;
+        }
+
+        [StructLayout(LayoutKind.Sequential)]
+        internal struct MouseInput
+        {
+            internal int Dx;
+            internal int Dy;
+            internal uint MouseData;
+            internal uint Flags;
+            internal uint Time;
+            internal UIntPtr ExtraInfo;
+        }
+
+        internal static bool SendWheelInput(int delta)
+        {
+            Input input = new Input();
+            input.Type = InputMouse;
+            input.Data.Mouse.MouseData = unchecked((uint)delta);
+            input.Data.Mouse.Flags = MouseEventWheel;
+            return SendInput(1U, ref input, Marshal.SizeOf(typeof(Input))) == 1U;
+        }
+
         [DllImport("user32.dll", SetLastError = true)]
         internal static extern IntPtr SetWindowsHookEx(
             int idHook,
@@ -150,6 +199,12 @@ namespace WheelFix
             int nCode,
             IntPtr wParam,
             IntPtr lParam);
+
+        [DllImport("user32.dll", SetLastError = true)]
+        private static extern uint SendInput(
+            uint inputCount,
+            ref Input inputs,
+            int inputSize);
 
         [DllImport("kernel32.dll", CharSet = CharSet.Unicode, SetLastError = true)]
         internal static extern IntPtr GetModuleHandle(string moduleName);

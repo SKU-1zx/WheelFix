@@ -6,7 +6,9 @@ namespace WheelFix
     internal enum WheelFilterDecision
     {
         Allow,
-        Block
+        Block,
+        Replay,
+        ReplayFailed
     }
 
     /// <summary>
@@ -16,20 +18,21 @@ namespace WheelFix
     /// </summary>
     internal sealed class WheelFilterCore
     {
-        private const int MinimumWindowMs = 10;
-        private const int MaximumWindowMs = 150;
+        private const int MinimumConfirmationPulses = 2;
+        private const int MaximumConfirmationPulses = 4;
 
         private bool _enabled;
-        private int _windowMs;
+        private int _confirmationPulses;
         private int _lastAcceptedDirection;
-        private uint _lastAcceptedTime;
         private int _pendingOppositeDirection;
+        private int _pendingOppositeCount;
+        private int _pendingOppositeDelta;
         private long _blockedCount;
 
-        public WheelFilterCore(bool enabled, int windowMs)
+        public WheelFilterCore(bool enabled, int confirmationPulses)
         {
             _enabled = enabled;
-            _windowMs = ClampWindow(windowMs);
+            _confirmationPulses = ClampConfirmation(confirmationPulses);
         }
 
         public bool Enabled
@@ -47,18 +50,18 @@ namespace WheelFix
             }
         }
 
-        public int WindowMs
+        public int ConfirmationPulses
         {
-            get { return _windowMs; }
+            get { return _confirmationPulses; }
             set
             {
-                int clamped = ClampWindow(value);
-                if (_windowMs == clamped)
+                int clamped = ClampConfirmation(value);
+                if (_confirmationPulses == clamped)
                 {
                     return;
                 }
 
-                _windowMs = clamped;
+                _confirmationPulses = clamped;
                 ResetHistory();
             }
         }
@@ -73,8 +76,10 @@ namespace WheelFix
             Interlocked.Exchange(ref _blockedCount, 0L);
         }
 
-        public WheelFilterDecision Process(int delta, uint timestamp)
+        public WheelFilterDecision Process(int delta, out int replayDelta)
         {
+            replayDelta = 0;
+
             if (!_enabled || delta == 0)
             {
                 return WheelFilterDecision.Allow;
@@ -84,60 +89,66 @@ namespace WheelFix
 
             if (_lastAcceptedDirection == 0)
             {
-                Accept(direction, timestamp);
+                _lastAcceptedDirection = direction;
                 return WheelFilterDecision.Allow;
             }
 
             if (direction == _lastAcceptedDirection)
             {
-                Accept(direction, timestamp);
+                DiscardPendingOpposite();
                 return WheelFilterDecision.Allow;
             }
 
-            uint sinceLastAccepted = Elapsed(timestamp, _lastAcceptedTime);
-            if (sinceLastAccepted > (uint)_windowMs)
+            if (_pendingOppositeDirection != direction)
             {
-                Accept(direction, timestamp);
-                return WheelFilterDecision.Allow;
+                ClearPendingOpposite();
+                _pendingOppositeDirection = direction;
             }
 
-            // A second consecutive pulse in the new direction confirms a real
-            // fast reversal. Only the first pulse is sacrificed; no synthetic
-            // mouse input is ever generated.
-            if (_pendingOppositeDirection == direction)
+            // ponytail: Windows exposes wheel deltas, not the encoder phases.
+            // One or two isolated reverse pulses cannot be distinguished from
+            // the measured bounce; an opt-in passthrough mode is the upgrade
+            // path if precision single-notch reversals are later required.
+            _pendingOppositeCount++;
+            _pendingOppositeDelta += delta;
+
+            if (_pendingOppositeCount < _confirmationPulses)
             {
-                Accept(direction, timestamp);
-                return WheelFilterDecision.Allow;
+                return WheelFilterDecision.Block;
             }
 
-            _pendingOppositeDirection = direction;
-            Interlocked.Increment(ref _blockedCount);
-            return WheelFilterDecision.Block;
+            replayDelta = _pendingOppositeDelta;
+            _lastAcceptedDirection = direction;
+            ClearPendingOpposite();
+            return WheelFilterDecision.Replay;
         }
 
-        private void Accept(int direction, uint timestamp)
+        private void DiscardPendingOpposite()
         {
-            _lastAcceptedDirection = direction;
-            _lastAcceptedTime = timestamp;
+            if (_pendingOppositeCount != 0)
+            {
+                Interlocked.Add(ref _blockedCount, _pendingOppositeCount);
+                ClearPendingOpposite();
+            }
+        }
+
+        private void ClearPendingOpposite()
+        {
             _pendingOppositeDirection = 0;
+            _pendingOppositeCount = 0;
+            _pendingOppositeDelta = 0;
         }
 
         private void ResetHistory()
         {
             _lastAcceptedDirection = 0;
-            _pendingOppositeDirection = 0;
+            ClearPendingOpposite();
         }
 
-        private static uint Elapsed(uint current, uint previous)
+        private static int ClampConfirmation(int value)
         {
-            // uint subtraction intentionally handles the 32-bit Windows tick
-            // counter wrapping roughly every 49.7 days.
-            return unchecked(current - previous);
-        }
-
-        private static int ClampWindow(int value)
-        {
-            return Math.Max(MinimumWindowMs, Math.Min(MaximumWindowMs, value));
+            return Math.Max(MinimumConfirmationPulses,
+                Math.Min(MaximumConfirmationPulses, value));
         }
     }
 }

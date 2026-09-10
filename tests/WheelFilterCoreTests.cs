@@ -9,13 +9,12 @@ namespace WheelFix
         private static void Main()
         {
             FirstEventAndSameDirectionAreAllowed();
-            FastOppositePulseIsBlocked();
-            OriginalDirectionCancelsTheFalseReversal();
-            TwoOppositePulsesConfirmARealReversal();
-            SlowDirectionChangeIsAllowed();
+            FalseReversalIsHeldAndDiscarded();
+            ConfirmedReversalReplaysEveryHeldPulse();
+            RealDamagedEncoderTraceIsCleaned();
             DisabledFilterAllowsEverything();
-            TimestampWrapIsHandled();
             ChangingSettingsResetsHistory();
+            ConfirmationSettingIsClamped();
 
             Console.WriteLine("OK - " + _testsRun + " tests passed.");
         }
@@ -23,86 +22,117 @@ namespace WheelFix
         private static void FirstEventAndSameDirectionAreAllowed()
         {
             WheelFilterCore filter = NewFilter();
-            AssertDecision(WheelFilterDecision.Allow, filter.Process(-120, 100U));
-            AssertDecision(WheelFilterDecision.Allow, filter.Process(-120, 120U));
+            AssertProcess(filter, -120, WheelFilterDecision.Allow, 0);
+            AssertProcess(filter, -120, WheelFilterDecision.Allow, 0);
             AssertEqual(0L, filter.BlockedCount);
         }
 
-        private static void FastOppositePulseIsBlocked()
+        private static void FalseReversalIsHeldAndDiscarded()
         {
             WheelFilterCore filter = NewFilter();
-            filter.Process(-120, 100U);
-            AssertDecision(WheelFilterDecision.Block, filter.Process(120, 130U));
-            AssertEqual(1L, filter.BlockedCount);
+            AssertProcess(filter, -120, WheelFilterDecision.Allow, 0);
+            AssertProcess(filter, 120, WheelFilterDecision.Block, 0);
+            AssertProcess(filter, 120, WheelFilterDecision.Block, 0);
+            AssertProcess(filter, -120, WheelFilterDecision.Allow, 0);
+            AssertEqual(2L, filter.BlockedCount);
         }
 
-        private static void OriginalDirectionCancelsTheFalseReversal()
+        private static void ConfirmedReversalReplaysEveryHeldPulse()
         {
             WheelFilterCore filter = NewFilter();
-            filter.Process(-120, 100U);
-            AssertDecision(WheelFilterDecision.Block, filter.Process(120, 115U));
-            AssertDecision(WheelFilterDecision.Allow, filter.Process(-120, 125U));
-            AssertDecision(WheelFilterDecision.Block, filter.Process(120, 140U));
-        }
-
-        private static void TwoOppositePulsesConfirmARealReversal()
-        {
-            WheelFilterCore filter = NewFilter();
-            filter.Process(-120, 100U);
-            AssertDecision(WheelFilterDecision.Block, filter.Process(120, 120U));
-            AssertDecision(WheelFilterDecision.Allow, filter.Process(120, 135U));
-            AssertDecision(WheelFilterDecision.Allow, filter.Process(120, 150U));
-        }
-
-        private static void SlowDirectionChangeIsAllowed()
-        {
-            WheelFilterCore filter = NewFilter();
-            filter.Process(-120, 100U);
-            AssertDecision(WheelFilterDecision.Allow, filter.Process(120, 156U));
+            AssertProcess(filter, -120, WheelFilterDecision.Allow, 0);
+            AssertProcess(filter, 120, WheelFilterDecision.Block, 0);
+            AssertProcess(filter, 120, WheelFilterDecision.Block, 0);
+            AssertProcess(filter, 120, WheelFilterDecision.Replay, 360);
+            AssertProcess(filter, 120, WheelFilterDecision.Allow, 0);
             AssertEqual(0L, filter.BlockedCount);
+        }
+
+        private static void RealDamagedEncoderTraceIsCleaned()
+        {
+            const string trace =
+                "---------+-+-+----+-+-+-+------+------++--+--+--------+--+------" +
+                "---+-+-++-+--++----+------+-++----+--+--+-------+--+--+--+---+-";
+
+            WheelFilterCore filter = NewFilter();
+            int outputDelta = 0;
+            int upwardOutputEvents = 0;
+
+            foreach (char pulse in trace)
+            {
+                int delta = pulse == '+' ? 120 : -120;
+                int replayDelta;
+                WheelFilterDecision decision =
+                    filter.Process(delta, out replayDelta);
+
+                int emittedDelta = decision == WheelFilterDecision.Allow
+                    ? delta
+                    : replayDelta;
+                outputDelta += emittedDelta;
+                if (emittedDelta > 0)
+                {
+                    upwardOutputEvents++;
+                }
+            }
+
+            AssertEqual(-11280L, outputDelta);
+            AssertEqual(0L, upwardOutputEvents);
+            AssertEqual(33L, filter.BlockedCount);
         }
 
         private static void DisabledFilterAllowsEverything()
         {
-            WheelFilterCore filter = new WheelFilterCore(false, 55);
-            AssertDecision(WheelFilterDecision.Allow, filter.Process(-120, 100U));
-            AssertDecision(WheelFilterDecision.Allow, filter.Process(120, 101U));
+            WheelFilterCore filter = new WheelFilterCore(false, 3);
+            AssertProcess(filter, -120, WheelFilterDecision.Allow, 0);
+            AssertProcess(filter, 120, WheelFilterDecision.Allow, 0);
             AssertEqual(0L, filter.BlockedCount);
-        }
-
-        private static void TimestampWrapIsHandled()
-        {
-            WheelFilterCore filter = NewFilter();
-            filter.Process(-120, uint.MaxValue - 10U);
-            AssertDecision(WheelFilterDecision.Block, filter.Process(120, 15U));
         }
 
         private static void ChangingSettingsResetsHistory()
         {
             WheelFilterCore filter = NewFilter();
-            filter.Process(-120, 100U);
-            filter.WindowMs = 90;
-            AssertDecision(WheelFilterDecision.Allow, filter.Process(120, 110U));
+            AssertProcess(filter, -120, WheelFilterDecision.Allow, 0);
+            AssertProcess(filter, 120, WheelFilterDecision.Block, 0);
+
+            filter.ConfirmationPulses = 4;
+            AssertProcess(filter, 120, WheelFilterDecision.Allow, 0);
 
             filter.Enabled = false;
             filter.Enabled = true;
-            AssertDecision(WheelFilterDecision.Allow, filter.Process(-120, 120U));
+            AssertProcess(filter, -120, WheelFilterDecision.Allow, 0);
+        }
+
+        private static void ConfirmationSettingIsClamped()
+        {
+            WheelFilterCore filter = new WheelFilterCore(true, 99);
+            AssertEqual(4L, filter.ConfirmationPulses);
+            filter.ConfirmationPulses = 1;
+            AssertEqual(2L, filter.ConfirmationPulses);
         }
 
         private static WheelFilterCore NewFilter()
         {
-            return new WheelFilterCore(true, 55);
+            return new WheelFilterCore(true, 3);
         }
 
-        private static void AssertDecision(
-            WheelFilterDecision expected,
-            WheelFilterDecision actual)
+        private static void AssertProcess(
+            WheelFilterCore filter,
+            int delta,
+            WheelFilterDecision expectedDecision,
+            int expectedReplayDelta)
         {
+            int replayDelta;
+            WheelFilterDecision actualDecision =
+                filter.Process(delta, out replayDelta);
+
             _testsRun++;
-            if (expected != actual)
+            if (actualDecision != expectedDecision ||
+                replayDelta != expectedReplayDelta)
             {
                 throw new InvalidOperationException(
-                    "Expected " + expected + ", received " + actual + ".");
+                    "Expected " + expectedDecision + "/" +
+                    expectedReplayDelta + ", received " + actualDecision +
+                    "/" + replayDelta + ".");
             }
         }
 

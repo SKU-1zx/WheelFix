@@ -10,9 +10,9 @@ using System.Windows.Forms;
 [assembly: AssemblyCompany("SKU-1zx")]
 [assembly: AssemblyProduct("WheelFix")]
 [assembly: AssemblyCopyright("Copyright © 2026 SKU-1zx")]
-[assembly: AssemblyVersion("0.2.1.0")]
-[assembly: AssemblyFileVersion("0.2.1.0")]
-[assembly: AssemblyInformationalVersion("0.2.1-diagnostic.1")]
+[assembly: AssemblyVersion("0.3.0.0")]
+[assembly: AssemblyFileVersion("0.3.0.0")]
+[assembly: AssemblyInformationalVersion("0.3.0-preview.3")]
 
 namespace WheelFix
 {
@@ -92,18 +92,21 @@ namespace WheelFix
         public WheelFixContext(bool startedWithWindows)
         {
             _settings = AppSettings.Load();
-            _filter = new WheelFilterCore(_settings.Enabled, _settings.WindowMs);
+            _filter = new WheelFilterCore(
+                _settings.Enabled,
+                _settings.ConfirmationPulses);
             _mouseHook = new NativeMouseHook(_filter);
             _icon = TrayIconFactory.Create();
             DiagnosticLog.Write(
                 "Settings loaded: filter=" +
                 (_settings.Enabled ? "enabled" : "paused") +
-                ", debounce=" + _settings.WindowMs + " ms.");
+                ", reversal confirmation=" +
+                _settings.ConfirmationPulses + " pulses.");
 
             _form = new MainForm(
                 _icon,
                 SetFilterEnabled,
-                SetWindow,
+                SetConfirmationPulses,
                 SetStartup,
                 ResetCounter);
             MainForm = _form;
@@ -124,14 +127,14 @@ namespace WheelFix
             };
             _menu.Items.Add(_enabledMenuItem);
 
-            ToolStripMenuItem sensitivityMenu =
-                new ToolStripMenuItem(L.Text("Strength", "Sensibilità"));
+            ToolStripMenuItem sensitivityMenu = new ToolStripMenuItem(
+                L.Text("Reversal confirmation", "Conferma inversione"));
             _lightMenuItem = CreatePresetMenuItem(
-                L.Text("Light (25 ms)", "Leggero (25 ms)"), 25);
+                L.Text("Light (2 pulses)", "Leggero (2 impulsi)"), 2);
             _balancedMenuItem = CreatePresetMenuItem(
-                L.Text("Balanced (55 ms)", "Bilanciato (55 ms)"), 55);
+                L.Text("Balanced (3 pulses)", "Bilanciato (3 impulsi)"), 3);
             _strongMenuItem = CreatePresetMenuItem(
-                L.Text("Strong (90 ms)", "Forte (90 ms)"), 90);
+                L.Text("Strong (4 pulses)", "Forte (4 impulsi)"), 4);
             sensitivityMenu.DropDownItems.Add(_lightMenuItem);
             sensitivityMenu.DropDownItems.Add(_balancedMenuItem);
             sensitivityMenu.DropDownItems.Add(_strongMenuItem);
@@ -237,10 +240,27 @@ namespace WheelFix
                 line.Append(" t=")
                     .Append(traceEvent.Timestamp)
                     .Append(" d=")
-                    .Append(traceEvent.Delta)
-                    .Append(traceEvent.Decision == WheelFilterDecision.Block
-                        ? " BLOCK"
-                        : " ALLOW");
+                    .Append(traceEvent.Delta);
+
+                if (traceEvent.Decision == WheelFilterDecision.Block)
+                {
+                    line.Append(" HOLD");
+                }
+                else if (traceEvent.Decision == WheelFilterDecision.Replay)
+                {
+                    line.Append(" REPLAY d=")
+                        .Append(traceEvent.ReplayDelta);
+                }
+                else if (traceEvent.Decision ==
+                    WheelFilterDecision.ReplayFailed)
+                {
+                    line.Append(" REPLAY_FAILED d=")
+                        .Append(traceEvent.ReplayDelta);
+                }
+                else
+                {
+                    line.Append(" ALLOW");
+                }
             }
 
             if (line != null)
@@ -249,10 +269,15 @@ namespace WheelFix
             }
         }
 
-        private ToolStripMenuItem CreatePresetMenuItem(string text, int windowMs)
+        private ToolStripMenuItem CreatePresetMenuItem(
+            string text,
+            int confirmationPulses)
         {
             ToolStripMenuItem item = new ToolStripMenuItem(text);
-            item.Click += delegate { SetWindow(windowMs); };
+            item.Click += delegate
+            {
+                SetConfirmationPulses(confirmationPulses);
+            };
             return item;
         }
 
@@ -266,13 +291,14 @@ namespace WheelFix
             SyncUi();
         }
 
-        private void SetWindow(int windowMs)
+        private void SetConfirmationPulses(int confirmationPulses)
         {
-            _filter.WindowMs = windowMs;
-            _settings.WindowMs = _filter.WindowMs;
+            _filter.ConfirmationPulses = confirmationPulses;
+            _settings.ConfirmationPulses = _filter.ConfirmationPulses;
             SaveSettings();
             DiagnosticLog.Write(
-                "Debounce window changed to " + _settings.WindowMs + " ms.");
+                "Reversal confirmation changed to " +
+                _settings.ConfirmationPulses + " pulses.");
             SyncUi();
         }
 
@@ -367,15 +393,15 @@ namespace WheelFix
 
             _form.ApplyState(
                 _settings.Enabled,
-                _settings.WindowMs,
+                _settings.ConfirmationPulses,
                 startupEnabled,
                 blocked);
 
             _enabledMenuItem.Checked = _settings.Enabled;
             _startupMenuItem.Checked = startupEnabled;
-            _lightMenuItem.Checked = _settings.WindowMs == 25;
-            _balancedMenuItem.Checked = _settings.WindowMs == 55;
-            _strongMenuItem.Checked = _settings.WindowMs == 90;
+            _lightMenuItem.Checked = _settings.ConfirmationPulses == 2;
+            _balancedMenuItem.Checked = _settings.ConfirmationPulses == 3;
+            _strongMenuItem.Checked = _settings.ConfirmationPulses == 4;
             _notifyIcon.Text = _settings.Enabled
                 ? L.Text("WheelFix - filter enabled", "WheelFix - filtro attivo")
                 : L.Text("WheelFix - filter paused", "WheelFix - filtro in pausa");

@@ -8,15 +8,15 @@ namespace WheelFix
     {
         private readonly CheckBox _enabledCheckBox;
         private readonly Label _statusLabel;
-        private readonly TrackBar _windowTrackBar;
-        private readonly Label _windowValueLabel;
+        private readonly TrackBar _confirmationTrackBar;
+        private readonly Label _confirmationValueLabel;
         private readonly CheckBox _startupCheckBox;
         private readonly Label _blockedValueLabel;
         private readonly Button _lightButton;
         private readonly Button _balancedButton;
         private readonly Button _strongButton;
         private readonly Action<bool> _enabledChanged;
-        private readonly Action<int> _windowChanged;
+        private readonly Action<int> _confirmationChanged;
         private readonly Action<bool> _startupChanged;
         private readonly Action _resetCount;
         private bool _updating;
@@ -25,12 +25,12 @@ namespace WheelFix
         public MainForm(
             Icon icon,
             Action<bool> enabledChanged,
-            Action<int> windowChanged,
+            Action<int> confirmationChanged,
             Action<bool> startupChanged,
             Action resetCount)
         {
             _enabledChanged = enabledChanged;
-            _windowChanged = windowChanged;
+            _confirmationChanged = confirmationChanged;
             _startupChanged = startupChanged;
             _resetCount = resetCount;
 
@@ -86,43 +86,43 @@ namespace WheelFix
                 FontStyle.Bold, GraphicsUnit.Point);
             Controls.Add(_statusLabel);
 
-            Label sensitivityLabel = new Label();
-            sensitivityLabel.AutoSize = true;
-            sensitivityLabel.Font = new Font("Segoe UI Semibold", 9.5F,
+            Label confirmationLabel = new Label();
+            confirmationLabel.AutoSize = true;
+            confirmationLabel.Font = new Font("Segoe UI Semibold", 9.5F,
                 FontStyle.Bold, GraphicsUnit.Point);
-            sensitivityLabel.Text = L.Text(
-                "Debounce window",
-                "Finestra anti-rimbalzo");
-            sensitivityLabel.Location = new Point(22, 145);
-            Controls.Add(sensitivityLabel);
+            confirmationLabel.Text = L.Text(
+                "Reversal confirmation",
+                "Conferma inversione");
+            confirmationLabel.Location = new Point(22, 145);
+            Controls.Add(confirmationLabel);
 
-            _windowValueLabel = new Label();
-            _windowValueLabel.AutoSize = false;
-            _windowValueLabel.Size = new Size(82, 22);
-            _windowValueLabel.Location = new Point(414, 143);
-            _windowValueLabel.TextAlign = ContentAlignment.MiddleRight;
-            Controls.Add(_windowValueLabel);
+            _confirmationValueLabel = new Label();
+            _confirmationValueLabel.AutoSize = false;
+            _confirmationValueLabel.Size = new Size(95, 22);
+            _confirmationValueLabel.Location = new Point(401, 143);
+            _confirmationValueLabel.TextAlign = ContentAlignment.MiddleRight;
+            Controls.Add(_confirmationValueLabel);
 
-            _windowTrackBar = new TrackBar();
-            _windowTrackBar.Minimum = 10;
-            _windowTrackBar.Maximum = 150;
-            _windowTrackBar.TickFrequency = 10;
-            _windowTrackBar.SmallChange = 5;
-            _windowTrackBar.LargeChange = 10;
-            _windowTrackBar.Size = new Size(482, 45);
-            _windowTrackBar.Location = new Point(16, 169);
-            _windowTrackBar.ValueChanged += WindowTrackBarValueChanged;
-            Controls.Add(_windowTrackBar);
+            _confirmationTrackBar = new TrackBar();
+            _confirmationTrackBar.Minimum = 2;
+            _confirmationTrackBar.Maximum = 4;
+            _confirmationTrackBar.TickFrequency = 1;
+            _confirmationTrackBar.SmallChange = 1;
+            _confirmationTrackBar.LargeChange = 1;
+            _confirmationTrackBar.Size = new Size(482, 45);
+            _confirmationTrackBar.Location = new Point(16, 169);
+            _confirmationTrackBar.ValueChanged += ConfirmationTrackBarValueChanged;
+            Controls.Add(_confirmationTrackBar);
 
             _lightButton = CreatePresetButton(
-                L.Text("Light  25 ms", "Leggero  25 ms"), 22);
+                L.Text("Light  2 pulses", "Leggero  2 impulsi"), 22);
             _balancedButton = CreatePresetButton(
-                L.Text("Balanced  55 ms", "Bilanciato  55 ms"), 180);
+                L.Text("Balanced  3 pulses", "Bilanciato  3 impulsi"), 180);
             _strongButton = CreatePresetButton(
-                L.Text("Strong  90 ms", "Forte  90 ms"), 338);
-            _lightButton.Click += delegate { SetPreset(25); };
-            _balancedButton.Click += delegate { SetPreset(55); };
-            _strongButton.Click += delegate { SetPreset(90); };
+                L.Text("Strong  4 pulses", "Forte  4 impulsi"), 338);
+            _lightButton.Click += delegate { SetPreset(2); };
+            _balancedButton.Click += delegate { SetPreset(3); };
+            _strongButton.Click += delegate { SetPreset(4); };
             Controls.Add(_lightButton);
             Controls.Add(_balancedButton);
             Controls.Add(_strongButton);
@@ -133,12 +133,12 @@ namespace WheelFix
             explanation.Location = new Point(23, 257);
             explanation.ForeColor = Color.FromArgb(75, 85, 99);
             explanation.Text = L.Text(
-                "A larger window catches slower bounce, but may discard the " +
-                    "first notch when you reverse direction very quickly. " +
-                    "Start with Balanced.",
-                "Più millisecondi eliminano rimbalzi più lenti, ma possono " +
-                    "scartare il primo scatto quando inverti direzione molto " +
-                    "velocemente. Parti da Bilanciato.");
+                "Opposite pulses are held until the selected count confirms " +
+                    "a reversal, then replayed together without losing scroll " +
+                    "distance. Start with 3 pulses.",
+                "Gli impulsi contrari vengono trattenuti fino alla conferma, " +
+                    "poi riprodotti insieme senza perdere distanza. Parti da " +
+                    "3 impulsi.");
             Controls.Add(explanation);
 
             Panel separator = new Panel();
@@ -200,17 +200,23 @@ namespace WheelFix
             Controls.Add(hideButton);
         }
 
-        public void ApplyState(bool enabled, int windowMs, bool startup, long blocked)
+        public void ApplyState(
+            bool enabled,
+            int confirmationPulses,
+            bool startup,
+            long blocked)
         {
             _updating = true;
             try
             {
                 _enabledCheckBox.Checked = enabled;
-                _windowTrackBar.Value = Math.Max(_windowTrackBar.Minimum,
-                    Math.Min(_windowTrackBar.Maximum, windowMs));
+                _confirmationTrackBar.Value = Math.Max(
+                    _confirmationTrackBar.Minimum,
+                    Math.Min(_confirmationTrackBar.Maximum,
+                        confirmationPulses));
                 _startupCheckBox.Checked = startup;
                 _blockedValueLabel.Text = blocked.ToString("N0");
-                UpdateVisualState(enabled, windowMs);
+                UpdateVisualState(enabled, confirmationPulses);
             }
             finally
             {
@@ -268,9 +274,9 @@ namespace WheelFix
             return button;
         }
 
-        private void SetPreset(int windowMs)
+        private void SetPreset(int confirmationPulses)
         {
-            _windowTrackBar.Value = windowMs;
+            _confirmationTrackBar.Value = confirmationPulses;
         }
 
         private void EnabledCheckBoxChanged(object sender, EventArgs e)
@@ -280,21 +286,23 @@ namespace WheelFix
                 return;
             }
 
-            UpdateVisualState(_enabledCheckBox.Checked, _windowTrackBar.Value);
+            UpdateVisualState(
+                _enabledCheckBox.Checked,
+                _confirmationTrackBar.Value);
             if (_enabledChanged != null)
             {
                 _enabledChanged(_enabledCheckBox.Checked);
             }
         }
 
-        private void WindowTrackBarValueChanged(object sender, EventArgs e)
+        private void ConfirmationTrackBarValueChanged(object sender, EventArgs e)
         {
-            int value = _windowTrackBar.Value;
+            int value = _confirmationTrackBar.Value;
             UpdateVisualState(_enabledCheckBox.Checked, value);
 
-            if (!_updating && _windowChanged != null)
+            if (!_updating && _confirmationChanged != null)
             {
-                _windowChanged(value);
+                _confirmationChanged(value);
             }
         }
 
@@ -306,10 +314,11 @@ namespace WheelFix
             }
         }
 
-        private void UpdateVisualState(bool enabled, int windowMs)
+        private void UpdateVisualState(bool enabled, int confirmationPulses)
         {
-            _windowValueLabel.Text = windowMs.ToString() + " ms";
-            _windowTrackBar.Enabled = enabled;
+            _confirmationValueLabel.Text = confirmationPulses.ToString() +
+                L.Text(" pulses", " impulsi");
+            _confirmationTrackBar.Enabled = enabled;
             _lightButton.Enabled = enabled;
             _balancedButton.Enabled = enabled;
             _strongButton.Enabled = enabled;

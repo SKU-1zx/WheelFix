@@ -10,13 +10,13 @@ namespace WheelFix
         private const string RunValueName = "WheelFix";
 
         public bool Enabled { get; set; }
-        public int WindowMs { get; set; }
+        public int ConfirmationPulses { get; set; }
 
         public static AppSettings Load()
         {
             AppSettings settings = new AppSettings();
             settings.Enabled = true;
-            settings.WindowMs = 55;
+            settings.ConfirmationPulses = 3;
 
             try
             {
@@ -25,8 +25,8 @@ namespace WheelFix
                     if (key != null)
                     {
                         settings.Enabled = ReadInt(key, "Enabled", 1) != 0;
-                        settings.WindowMs = Math.Max(10, Math.Min(150,
-                            ReadInt(key, "WindowMs", 55)));
+                        settings.ConfirmationPulses = Math.Max(2, Math.Min(4,
+                            ReadInt(key, "ConfirmationPulses", 3)));
                     }
                 }
             }
@@ -54,7 +54,8 @@ namespace WheelFix
                 }
 
                 key.SetValue("Enabled", Enabled ? 1 : 0, RegistryValueKind.DWord);
-                key.SetValue("WindowMs", WindowMs, RegistryValueKind.DWord);
+                key.SetValue("ConfirmationPulses", ConfirmationPulses,
+                    RegistryValueKind.DWord);
             }
         }
 

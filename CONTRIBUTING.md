@@ -10,7 +10,7 @@ Include:
 - mouse make and model;
 - Windows version;
 - application where the problem appears;
-- WheelFix debounce value;
+- WheelFix reversal-confirmation value;
 - a short input sequence, for example `down, down, false up`;
 - whether the blocked-pulse counter increases.
 

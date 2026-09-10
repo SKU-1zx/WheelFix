@@ -5,10 +5,10 @@
 
 **Un filtro anti-rimbalzo leggero per la rotellina del mouse su Windows.**
 
-> Preview diagnostica: la versione `0.2.1-diagnostic.1` mantiene invariato il
-> filtro della `0.2.0` e registra temporaneamente ogni evento verticale, il suo
-> timestamp Windows e se è stato accettato o bloccato. Usala solo per riprodurre
-> il difetto, poi chiudila e condividi intenzionalmente il log.
+> Preview di recupero: `0.3.0-preview.3` è calibrata sul trace reale del mouse
+> guasto. Trattiene una possibile inversione e, quando è confermata, riproduce
+> insieme tutti gli scatti trattenuti: il filtro può essere più aggressivo senza
+> perdere distanza di scorrimento.
 
 [English](README.md)
 
@@ -22,14 +22,15 @@ applicazioni Windows.
 ## Funzioni
 
 - Filtro globale della rotellina verticale, senza ritardo nella direzione normale.
-- Finestra anti-rimbalzo regolabile da 10 a 150 ms.
-- Preset Leggero, Bilanciato e Forte.
+- Conferma dell'inversione regolabile da 2 a 4 impulsi consecutivi.
+- Preset Leggero, Bilanciato e Forte; 3 impulsi è il valore consigliato.
 - Contatore degli impulsi errati bloccati.
 - Controlli nella tray e avvio facoltativo con Windows.
 - Log diagnostico locale, apribile direttamente dal menu della tray.
 - Interfaccia automatica italiano/inglese in base alla lingua di Windows.
 - Nessun installer, driver, telemetria, rete o privilegio amministrativo.
-- Nessun input sintetico: gli eventi accettati restano quelli originali del mouse.
+- Gli scatti trattenuti di una vera inversione vengono riprodotti con l'API
+  nativa `SendInput`; movimento, clic e tastiera non vengono mai generati.
 
 ## Download e avvio
 
@@ -37,7 +38,7 @@ applicazioni Windows.
    [Releases](https://github.com/SKU-1zx/WheelFix/releases/latest).
 2. Estrailo in una cartella stabile.
 3. Avvia `WheelFix.exe`.
-4. Parti da **Bilanciato (55 ms)** e usa normalmente la rotellina.
+4. Parti da **Bilanciato (3 impulsi)** e usa normalmente la rotellina.
 
 Chiudendo la finestra WheelFix resta attivo nell'area di notifica. Con il tasto
 destro sull'icona puoi mettere in pausa il filtro, cambiare intensità, attivare
@@ -45,15 +46,16 @@ l'avvio automatico, aprire il log diagnostico o uscire.
 
 ## Regolazione
 
-| Preset | Finestra | Quando usarlo |
+| Preset | Conferma | Quando usarlo |
 | --- | ---: | --- |
-| Leggero | 25 ms | Difetto raro o migliorato dopo la pulizia ad aria |
-| Bilanciato | 55 ms | Impostazione iniziale consigliata |
-| Forte | 90 ms | Rimbalzi frequenti o più lenti |
+| Leggero | 2 impulsi | Difetto raro; inversione più rapida |
+| Bilanciato | 3 impulsi | Valore calibrato sul trace reale |
+| Forte | 4 impulsi | Encoder estremamente danneggiato |
 
-Una finestra più alta elimina rimbalzi più lenti, ma può scartare il primo
-scatto quando inverti volontariamente direzione molto velocemente. Un secondo
-scatto consecutivo nella nuova direzione viene accettato subito.
+Gli impulsi contrari vengono trattenuti finché raggiungono la conferma scelta.
+Se ricompare la direzione corrente sono eliminati come rimbalzi; se l'inversione
+è confermata, WheelFix li riproduce tutti insieme. Per questo i primi scatti non
+vengono più persi come nelle due preview aggressive precedenti.
 
 Il contatore **Impulsi errati bloccati** conferma se il filtro sta intervenendo.
 Se aumenta mentre il salto indesiderato sparisce, l'impostazione è corretta.
@@ -61,12 +63,13 @@ Se aumenta mentre il salto indesiderato sparisce, l'impostazione è corretta.
 ## Come funziona
 
 WheelFix installa un normale hook utente `WH_MOUSE_LL` e osserva soltanto i
-messaggi della rotellina verticale. Un impulso contrario all'ultima direzione
-accettata viene bloccato quando arriva all'interno della finestra selezionata.
-Un altro impulso nella nuova direzione conferma un'inversione reale e passa.
+messaggi della rotellina verticale. La direzione corrente passa subito. Gli
+impulsi contrari restano in attesa fino alla conferma; allora un singolo evento
+`SendInput` restituisce l'intero delta accumulato e la nuova direzione passa
+normalmente.
 
 Movimento, pulsanti, scorrimento orizzontale ed eventi iniettati da altri
-software non vengono toccati. WheelFix non usa mai `SendInput`.
+software non vengono toccati.
 
 ## Log diagnostico
 
@@ -85,6 +88,10 @@ automaticamente prima di superare 1 MB.
 
 - Applicazioni e giochi che leggono direttamente il dispositivo tramite Raw
   Input possono saltare un hook Windows in modalità utente.
+- Windows può impedire a `SendInput` di raggiungere un'applicazione eseguita con
+  privilegi superiori a WheelFix; in quel caso il log mostra `REPLAY_FAILED`.
+- Uno o due scatti isolati nella nuova direzione restano necessariamente in
+  attesa: con i soli eventi Windows sono indistinguibili dai rimbalzi misurati.
 - WheelFix riduce i sintomi del rimbalzo, ma non ripara fisicamente l'encoder.
 - La versione attuale filtra soltanto la rotellina verticale.
 - L'eseguibile non è firmato digitalmente, quindi Windows può mostrare un
@@ -128,7 +135,7 @@ ed elimina la cartella. Se vuoi rimuovere anche il log diagnostico, elimina
 ## Contributi
 
 Una segnalazione è particolarmente utile se include modello del mouse, versione
-di Windows, applicazione interessata e finestra minima che risolve il problema.
+di Windows, applicazione interessata e conferma minima che risolve il problema.
 Il flusso di sviluppo è descritto in [CONTRIBUTING.md](CONTRIBUTING.md).
 
 ## Licenza

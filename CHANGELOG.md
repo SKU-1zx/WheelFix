@@ -4,11 +4,19 @@ All notable changes to WheelFix are documented in this file.
 
 ## [Unreleased]
 
+### Changed
+
+- Replace the fixed debounce window with 2–4 pulse reversal confirmation.
+- Replay confirmed reversal pulses through native `SendInput`, preserving the
+  complete scroll distance instead of discarding the first notches.
+- Calibrate the default 3-pulse mode against the captured 127-event hardware
+  trace: all 33 false reversals are removed without dropping any of the 94
+  correctly directed pulses.
+
 ### Diagnostic
 
-- Restore the exact `0.2.0` filtering behaviour and temporarily trace each raw
-  vertical-wheel delta, Windows timestamp and allow/block decision outside the
-  low-level hook for real-hardware calibration.
+- Keep the temporary raw wheel trace and report `HOLD`, `REPLAY`, or
+  `REPLAY_FAILED` for this preview.
 
 ## [0.2.0] - 2026-08-18
 

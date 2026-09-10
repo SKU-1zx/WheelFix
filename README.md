@@ -5,10 +5,10 @@
 
 **A lightweight mouse-wheel debounce filter for Windows.**
 
-> Diagnostic preview: version `0.2.1-diagnostic.1` keeps the `0.2.0` filter
-> unchanged and temporarily records each vertical wheel event, its Windows
-> timestamp and whether it was allowed or blocked. Use it only to reproduce a
-> fault, then exit and share the log intentionally.
+> Recovery preview: `0.3.0-preview.3` is calibrated against a real trace from
+> the failing mouse. It holds a possible reversal and, once confirmed, replays
+> every held notch together so the filter can be more aggressive without
+> losing scroll distance.
 
 [Italiano](README.it.md)
 
@@ -22,14 +22,15 @@ applications receive them.
 ## Features
 
 - Global vertical-wheel filtering with no input delay in the normal direction.
-- Adjustable debounce window from 10 to 150 ms.
-- Light, Balanced and Strong presets.
+- Adjustable reversal confirmation from 2 to 4 consecutive pulses.
+- Light, Balanced and Strong presets; 3 pulses is recommended.
 - Counter showing how many bad pulses were blocked.
 - Notification-area controls and optional startup with Windows.
 - Local diagnostic log, available directly from the notification-area menu.
 - Automatic English/Italian interface based on the Windows display language.
 - No installer, driver, telemetry, network access or administrator privileges.
-- No synthetic mouse events: accepted input remains the original hardware input.
+- Held notches from a real reversal are replayed through native `SendInput`;
+  mouse movement, clicks and keyboard input are never generated.
 
 ## Download and run
 
@@ -37,7 +38,7 @@ applications receive them.
    [Releases](https://github.com/SKU-1zx/WheelFix/releases/latest).
 2. Extract it to a stable folder.
 3. Run `WheelFix.exe`.
-4. Start with **Balanced (55 ms)** and use the wheel normally.
+4. Start with **Balanced (3 pulses)** and use the wheel normally.
 
 Closing the window keeps WheelFix active in the notification area. Right-click
 its icon to pause the filter, change strength, enable startup, open the
@@ -45,15 +46,16 @@ diagnostic log or exit.
 
 ## Tuning
 
-| Preset | Window | Suggested use |
+| Preset | Confirmation | Suggested use |
 | --- | ---: | --- |
-| Light | 25 ms | Rare bounce or a wheel that improved after compressed air |
-| Balanced | 55 ms | Recommended starting point |
-| Strong | 90 ms | Frequent or slower bounce |
+| Light | 2 pulses | Rare faults and faster reversals |
+| Balanced | 3 pulses | Value calibrated against the real trace |
+| Strong | 4 pulses | An extremely damaged encoder |
 
-A larger window catches slower bounce, but it may discard the first notch when
-you intentionally reverse direction very quickly. A second consecutive notch
-in the new direction is accepted immediately.
+Opposite pulses are held until they reach the selected confirmation count. If
+the current direction returns, they are discarded as bounce; if the reversal
+is confirmed, WheelFix replays them together. The first notches are therefore
+not lost as they were in the two rejected aggressive previews.
 
 The **Bad pulses blocked** counter confirms whether the filter is actually
 intervening. If the counter increases while the unwanted jump disappears, the
@@ -62,12 +64,12 @@ setting is doing its job.
 ## How it works
 
 WheelFix installs a standard `WH_MOUSE_LL` user-mode hook and observes only
-vertical wheel messages. A pulse opposite to the most recently accepted
-direction is blocked when it arrives inside the selected debounce window.
-Another pulse in that new direction confirms a real reversal and is allowed.
+vertical wheel messages. The current direction passes immediately. Opposite
+pulses are held until confirmation; one `SendInput` event then restores the
+complete accumulated delta and the new direction passes normally.
 
 Mouse movement, buttons, horizontal scrolling and injected events from other
-software are left untouched. WheelFix never calls `SendInput`.
+software are left untouched.
 
 ## Diagnostic log
 
@@ -85,6 +87,11 @@ over the network. The file is reset automatically before it exceeds 1 MB.
 
 - Applications and games that consume the device directly through Raw Input
   may bypass a user-mode Windows hook.
+- Windows may prevent `SendInput` from reaching an application running at a
+  higher integrity level than WheelFix; the log then shows `REPLAY_FAILED`.
+- One or two isolated notches in a new direction necessarily remain pending:
+  from Windows wheel events alone they are indistinguishable from the measured
+  bounce.
 - WheelFix reduces symptoms caused by encoder bounce; it does not repair the
   physical encoder.
 - The current release filters the vertical wheel only.
@@ -128,7 +135,7 @@ want to remove the diagnostic log.
 ## Contributing
 
 Bug reports are especially useful when they include the mouse model, Windows
-version, affected application and the smallest debounce value that works. See
+version, affected application and the smallest confirmation value that works. See
 [CONTRIBUTING.md](CONTRIBUTING.md) for the development workflow.
 
 ## License
