@@ -2,6 +2,21 @@
 
 All notable changes to WheelFix are documented in this file.
 
+## [0.3.0] - 2026-09-10
+
+### Changed
+
+- Lock each continuous wheel burst to its initial direction and block every
+  opposite pulse until the wheel is idle.
+- Add an adjustable 200–1500 ms idle gap with hardware-validated 400 ms default.
+- Keep active-direction events immediate and preserve the no-`SendInput`
+  architecture.
+
+### Privacy
+
+- Remove the temporary per-event calibration trace; stable logging remains
+  limited to lifecycle, settings, errors and grouped blocked-pulse counts.
+
 ## [0.2.0] - 2026-08-18
 
 ### Added

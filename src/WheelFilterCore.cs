@@ -16,14 +16,14 @@ namespace WheelFix
     /// </summary>
     internal sealed class WheelFilterCore
     {
-        private const int MinimumWindowMs = 10;
-        private const int MaximumWindowMs = 150;
+        private const int MinimumWindowMs = 200;
+        private const int MaximumWindowMs = 1500;
 
         private bool _enabled;
         private int _windowMs;
-        private int _lastAcceptedDirection;
-        private uint _lastAcceptedTime;
-        private int _pendingOppositeDirection;
+        private int _burstDirection;
+        private uint _lastEventTime;
+        private bool _hasLastEvent;
         private long _blockedCount;
 
         public WheelFilterCore(bool enabled, int windowMs)
@@ -82,50 +82,39 @@ namespace WheelFix
 
             int direction = delta > 0 ? 1 : -1;
 
-            if (_lastAcceptedDirection == 0)
+            // ponytail: Windows exposes decoded wheel deltas, not the encoder
+            // phases, so opposite intent and severe bounce are indistinguishable
+            // mid-burst. The deliberate ceiling is that a real reversal needs
+            // an idle pause; raw device data is the upgrade path.
+            if (!_hasLastEvent ||
+                Elapsed(timestamp, _lastEventTime) > (uint)_windowMs)
             {
-                Accept(direction, timestamp);
+                _burstDirection = direction;
+                _lastEventTime = timestamp;
+                _hasLastEvent = true;
                 return WheelFilterDecision.Allow;
             }
 
-            if (direction == _lastAcceptedDirection)
+            // Every physical wheel event keeps the current burst alive. This
+            // matters when a damaged encoder emits several wrong pulses: they
+            // must not become a new direction merely because the last good
+            // pulse is older than the idle gap.
+            _lastEventTime = timestamp;
+
+            if (direction == _burstDirection)
             {
-                Accept(direction, timestamp);
                 return WheelFilterDecision.Allow;
             }
 
-            uint sinceLastAccepted = Elapsed(timestamp, _lastAcceptedTime);
-            if (sinceLastAccepted > (uint)_windowMs)
-            {
-                Accept(direction, timestamp);
-                return WheelFilterDecision.Allow;
-            }
-
-            // A second consecutive pulse in the new direction confirms a real
-            // fast reversal. Only the first pulse is sacrificed; no synthetic
-            // mouse input is ever generated.
-            if (_pendingOppositeDirection == direction)
-            {
-                Accept(direction, timestamp);
-                return WheelFilterDecision.Allow;
-            }
-
-            _pendingOppositeDirection = direction;
             Interlocked.Increment(ref _blockedCount);
             return WheelFilterDecision.Block;
         }
 
-        private void Accept(int direction, uint timestamp)
-        {
-            _lastAcceptedDirection = direction;
-            _lastAcceptedTime = timestamp;
-            _pendingOppositeDirection = 0;
-        }
-
         private void ResetHistory()
         {
-            _lastAcceptedDirection = 0;
-            _pendingOppositeDirection = 0;
+            _burstDirection = 0;
+            _lastEventTime = 0U;
+            _hasLastEvent = false;
         }
 
         private static uint Elapsed(uint current, uint previous)

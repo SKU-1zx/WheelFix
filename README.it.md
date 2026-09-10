@@ -17,8 +17,8 @@ applicazioni Windows.
 ## Funzioni
 
 - Filtro globale della rotellina verticale, senza ritardo nella direzione normale.
-- Finestra anti-rimbalzo regolabile da 10 a 150 ms.
-- Preset Leggero, Bilanciato e Forte.
+- Pausa di fine raffica regolabile da 200 a 1500 ms.
+- Preset Rapido, Bilanciato e Aggressivo.
 - Contatore degli impulsi errati bloccati.
 - Controlli nella tray e avvio facoltativo con Windows.
 - Log diagnostico locale, apribile direttamente dal menu della tray.
@@ -32,7 +32,7 @@ applicazioni Windows.
    [Releases](https://github.com/SKU-1zx/WheelFix/releases/latest).
 2. Estrailo in una cartella stabile.
 3. Avvia `WheelFix.exe`.
-4. Parti da **Bilanciato (55 ms)** e usa normalmente la rotellina.
+4. Parti da **Bilanciato (400 ms)** e usa normalmente la rotellina.
 
 Chiudendo la finestra WheelFix resta attivo nell'area di notifica. Con il tasto
 destro sull'icona puoi mettere in pausa il filtro, cambiare intensità, attivare
@@ -40,15 +40,15 @@ l'avvio automatico, aprire il log diagnostico o uscire.
 
 ## Regolazione
 
-| Preset | Finestra | Quando usarlo |
+| Preset | Pausa | Quando usarlo |
 | --- | ---: | --- |
-| Leggero | 25 ms | Difetto raro o migliorato dopo la pulizia ad aria |
-| Bilanciato | 55 ms | Impostazione iniziale consigliata |
-| Forte | 90 ms | Rimbalzi frequenti o più lenti |
+| Rapido | 250 ms | Inversioni volontarie più rapide, filtro più debole |
+| Bilanciato | 400 ms | Valore predefinito verificato sul mouse reale |
+| Aggressivo | 800 ms | Errori più lunghi, inversioni volontarie più lente |
 
-Una finestra più alta elimina rimbalzi più lenti, ma può scartare il primo
-scatto quando inverti volontariamente direzione molto velocemente. Un secondo
-scatto consecutivo nella nuova direzione viene accettato subito.
+Una raffica mantiene la direzione del primo evento finché non arrivano eventi
+per la pausa selezionata. Per invertire direzione, ferma brevemente la
+rotellina. Una pausa maggiore blocca errori più lunghi ma rallenta l'inversione.
 
 Il contatore **Impulsi errati bloccati** conferma se il filtro sta intervenendo.
 Se aumenta mentre il salto indesiderato sparisce, l'impostazione è corretta.
@@ -56,9 +56,9 @@ Se aumenta mentre il salto indesiderato sparisce, l'impostazione è corretta.
 ## Come funziona
 
 WheelFix installa un normale hook utente `WH_MOUSE_LL` e osserva soltanto i
-messaggi della rotellina verticale. Un impulso contrario all'ultima direzione
-accettata viene bloccato quando arriva all'interno della finestra selezionata.
-Un altro impulso nella nuova direzione conferma un'inversione reale e passa.
+messaggi della rotellina verticale. Il primo evento dopo una pausa avvia una
+raffica: gli eventi in quella direzione passano subito e tutti quelli contrari
+vengono bloccati.
 
 Movimento, pulsanti, scorrimento orizzontale ed eventi iniettati da altri
 software non vengono toccati. WheelFix non usa mai `SendInput`.
@@ -71,8 +71,8 @@ Scegli **Apri log diagnostico** dal menu della tray per aprire:
 
 Il log registra avvio e arresto di WheelFix, stato dell'hook, modifiche alle
 impostazioni, errori e conteggi raggruppati degli impulsi bloccati. **Non**
-registra movimenti del mouse, clic, nomi delle applicazioni o eventi della
-rotellina accettati. Nulla viene inviato in rete. Il file viene azzerato
+registra singoli eventi della rotellina, movimenti del mouse, clic o nomi delle
+applicazioni e nulla viene inviato in rete. Il file viene azzerato
 automaticamente prima di superare 1 MB.
 
 ## Limiti
@@ -80,6 +80,7 @@ automaticamente prima di superare 1 MB.
 - Applicazioni e giochi che leggono direttamente il dispositivo tramite Raw
   Input possono saltare un hook Windows in modalità utente.
 - WheelFix riduce i sintomi del rimbalzo, ma non ripara fisicamente l'encoder.
+- Una vera inversione viene accettata solo dopo la pausa configurata.
 - La versione attuale filtra soltanto la rotellina verticale.
 - L'eseguibile non è firmato digitalmente, quindi Windows può mostrare un
   avviso di reputazione al primo avvio.
@@ -122,7 +123,8 @@ ed elimina la cartella. Se vuoi rimuovere anche il log diagnostico, elimina
 ## Contributi
 
 Una segnalazione è particolarmente utile se include modello del mouse, versione
-di Windows, applicazione interessata e finestra minima che risolve il problema.
+di Windows, applicazione interessata e blocco direzione minimo che risolve il
+problema.
 Il flusso di sviluppo è descritto in [CONTRIBUTING.md](CONTRIBUTING.md).
 
 ## Licenza
