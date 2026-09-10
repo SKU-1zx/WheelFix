@@ -2,7 +2,7 @@ name: Windows release
 
 on:
   push:
-    tags: ["v*"]
+    branches: ["agent/publish-v0.3.0"]
 
 permissions:
   contents: write
@@ -30,7 +30,7 @@ jobs:
       - name: Package release
         shell: pwsh
         run: |
-          $tag = "${{ github.ref_name }}"
+          $tag = "v0.3.0"
 
           $releaseDir = Join-Path $PWD "release-package"
           New-Item -ItemType Directory -Path $releaseDir -Force | Out-Null
@@ -67,6 +67,6 @@ jobs:
           gh release create $env:RELEASE_TAG `
             $env:RELEASE_ZIP `
             $env:RELEASE_SHA256 `
-            --target $env:GITHUB_SHA `
+            --target "faa6881fd8afbb0de6e047fe9e03627571df2f19" `
             --title "WheelFix $env:RELEASE_TAG" `
             --generate-notes
