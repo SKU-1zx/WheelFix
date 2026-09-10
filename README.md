@@ -5,6 +5,11 @@
 
 **A lightweight mouse-wheel debounce filter for Windows.**
 
+> Diagnostic preview: version `0.2.1-diagnostic.1` keeps the `0.2.0` filter
+> unchanged and temporarily records each vertical wheel event, its Windows
+> timestamp and whether it was allowed or blocked. Use it only to reproduce a
+> fault, then exit and share the log intentionally.
+
 [Italiano](README.it.md)
 
 ![WheelFix interface preview](docs/interface-preview.svg)
@@ -70,9 +75,10 @@ Choose **Open diagnostic log** from the notification-area menu to open:
 
 `%LOCALAPPDATA%\WheelFix\WheelFix.log`
 
-The log records WheelFix startup and shutdown, hook status, setting changes,
-errors and grouped counts of blocked pulses. It does **not** record mouse
-movement, clicks, application names or accepted wheel events. Nothing is sent
+The public release records WheelFix startup and shutdown, hook status, setting
+changes, errors and grouped counts of blocked pulses. This diagnostic preview
+also records every vertical wheel delta and filter decision. It still does
+**not** record mouse movement, clicks or application names, and nothing is sent
 over the network. The file is reset automatically before it exceeds 1 MB.
 
 ## Limitations

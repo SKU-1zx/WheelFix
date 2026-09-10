@@ -1,6 +1,7 @@
 using System;
 using System.Drawing;
 using System.Reflection;
+using System.Text;
 using System.Threading;
 using System.Windows.Forms;
 
@@ -9,9 +10,9 @@ using System.Windows.Forms;
 [assembly: AssemblyCompany("SKU-1zx")]
 [assembly: AssemblyProduct("WheelFix")]
 [assembly: AssemblyCopyright("Copyright © 2026 SKU-1zx")]
-[assembly: AssemblyVersion("0.2.0.0")]
-[assembly: AssemblyFileVersion("0.2.0.0")]
-[assembly: AssemblyInformationalVersion("0.2.0")]
+[assembly: AssemblyVersion("0.2.1.0")]
+[assembly: AssemblyFileVersion("0.2.1.0")]
+[assembly: AssemblyInformationalVersion("0.2.1-diagnostic.1")]
 
 namespace WheelFix
 {
@@ -177,6 +178,7 @@ namespace WheelFix
                 }
 
                 _lastLoggedBlockedCount = blocked;
+                FlushWheelTrace();
             };
             _statsTimer.Start();
 
@@ -199,6 +201,7 @@ namespace WheelFix
                     "WheelFix stopping; blocked_total=" +
                     _filter.BlockedCount + ".");
                 _statsTimer.Stop();
+                FlushWheelTrace();
                 _statsTimer.Dispose();
                 _notifyIcon.Visible = false;
                 _notifyIcon.Dispose();
@@ -211,6 +214,39 @@ namespace WheelFix
             }
 
             base.ExitThreadCore();
+        }
+
+        private void FlushWheelTrace()
+        {
+            WheelTraceEvent traceEvent;
+            StringBuilder line = null;
+
+            while (_mouseHook.TryDequeueTrace(out traceEvent))
+            {
+                if (line == null)
+                {
+                    line = new StringBuilder("Wheel events:");
+                }
+                else if (line.Length > 3500)
+                {
+                    DiagnosticLog.Write(line.ToString());
+                    line.Length = 0;
+                    line.Append("Wheel events:");
+                }
+
+                line.Append(" t=")
+                    .Append(traceEvent.Timestamp)
+                    .Append(" d=")
+                    .Append(traceEvent.Delta)
+                    .Append(traceEvent.Decision == WheelFilterDecision.Block
+                        ? " BLOCK"
+                        : " ALLOW");
+            }
+
+            if (line != null)
+            {
+                DiagnosticLog.Write(line.ToString());
+            }
         }
 
         private ToolStripMenuItem CreatePresetMenuItem(string text, int windowMs)

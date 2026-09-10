@@ -2,6 +2,14 @@
 
 All notable changes to WheelFix are documented in this file.
 
+## [Unreleased]
+
+### Diagnostic
+
+- Restore the exact `0.2.0` filtering behaviour and temporarily trace each raw
+  vertical-wheel delta, Windows timestamp and allow/block decision outside the
+  low-level hook for real-hardware calibration.
+
 ## [0.2.0] - 2026-08-18
 
 ### Added

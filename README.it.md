@@ -5,6 +5,11 @@
 
 **Un filtro anti-rimbalzo leggero per la rotellina del mouse su Windows.**
 
+> Preview diagnostica: la versione `0.2.1-diagnostic.1` mantiene invariato il
+> filtro della `0.2.0` e registra temporaneamente ogni evento verticale, il suo
+> timestamp Windows e se è stato accettato o bloccato. Usala solo per riprodurre
+> il difetto, poi chiudila e condividi intenzionalmente il log.
+
 [English](README.md)
 
 ![Anteprima dell'interfaccia di WheelFix](docs/interface-preview.svg)
@@ -69,10 +74,11 @@ Scegli **Apri log diagnostico** dal menu della tray per aprire:
 
 `%LOCALAPPDATA%\WheelFix\WheelFix.log`
 
-Il log registra avvio e arresto di WheelFix, stato dell'hook, modifiche alle
-impostazioni, errori e conteggi raggruppati degli impulsi bloccati. **Non**
-registra movimenti del mouse, clic, nomi delle applicazioni o eventi della
-rotellina accettati. Nulla viene inviato in rete. Il file viene azzerato
+La release pubblica registra avvio e arresto di WheelFix, stato dell'hook,
+modifiche alle impostazioni, errori e conteggi raggruppati degli impulsi
+bloccati. Questa preview diagnostica registra anche ogni delta verticale e la
+decisione del filtro. Continua a **non** registrare movimenti del mouse, clic o
+nomi delle applicazioni e nulla viene inviato in rete. Il file viene azzerato
 automaticamente prima di superare 1 MB.
 
 ## Limiti
