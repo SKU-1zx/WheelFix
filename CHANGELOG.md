@@ -4,6 +4,14 @@ All notable changes to WheelFix are documented in this file.
 
 ## [Unreleased]
 
+### Preview 0.3.0-preview.4
+
+- Lock each continuous wheel burst to its initial direction and block every
+  opposite pulse until the wheel is idle.
+- Remove reversal replay and all synthetic wheel input.
+- Add an adjustable 200–1500 ms idle gap; 800 ms covers every uninterrupted
+  bad-input pattern in both captured traces from the affected encoder.
+
 ### Diagnostic
 
 - Restore the exact `0.2.0` filtering behaviour and temporarily trace each raw

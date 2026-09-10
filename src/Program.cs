@@ -10,9 +10,9 @@ using System.Windows.Forms;
 [assembly: AssemblyCompany("SKU-1zx")]
 [assembly: AssemblyProduct("WheelFix")]
 [assembly: AssemblyCopyright("Copyright © 2026 SKU-1zx")]
-[assembly: AssemblyVersion("0.2.1.0")]
-[assembly: AssemblyFileVersion("0.2.1.0")]
-[assembly: AssemblyInformationalVersion("0.2.1-diagnostic.1")]
+[assembly: AssemblyVersion("0.3.0.0")]
+[assembly: AssemblyFileVersion("0.3.0.0")]
+[assembly: AssemblyInformationalVersion("0.3.0-preview.4")]
 
 namespace WheelFix
 {
@@ -98,7 +98,7 @@ namespace WheelFix
             DiagnosticLog.Write(
                 "Settings loaded: filter=" +
                 (_settings.Enabled ? "enabled" : "paused") +
-                ", debounce=" + _settings.WindowMs + " ms.");
+                ", burst direction lock=" + _settings.WindowMs + " ms.");
 
             _form = new MainForm(
                 _icon,
@@ -125,13 +125,13 @@ namespace WheelFix
             _menu.Items.Add(_enabledMenuItem);
 
             ToolStripMenuItem sensitivityMenu =
-                new ToolStripMenuItem(L.Text("Strength", "Sensibilità"));
+                new ToolStripMenuItem(L.Text("Direction lock", "Blocco direzione"));
             _lightMenuItem = CreatePresetMenuItem(
-                L.Text("Light (25 ms)", "Leggero (25 ms)"), 25);
+                L.Text("Responsive (400 ms)", "Rapido (400 ms)"), 400);
             _balancedMenuItem = CreatePresetMenuItem(
-                L.Text("Balanced (55 ms)", "Bilanciato (55 ms)"), 55);
+                L.Text("Balanced (800 ms)", "Bilanciato (800 ms)"), 800);
             _strongMenuItem = CreatePresetMenuItem(
-                L.Text("Strong (90 ms)", "Forte (90 ms)"), 90);
+                L.Text("Aggressive (1200 ms)", "Aggressivo (1200 ms)"), 1200);
             sensitivityMenu.DropDownItems.Add(_lightMenuItem);
             sensitivityMenu.DropDownItems.Add(_balancedMenuItem);
             sensitivityMenu.DropDownItems.Add(_strongMenuItem);
@@ -272,7 +272,8 @@ namespace WheelFix
             _settings.WindowMs = _filter.WindowMs;
             SaveSettings();
             DiagnosticLog.Write(
-                "Debounce window changed to " + _settings.WindowMs + " ms.");
+                "Burst direction lock changed to " +
+                _settings.WindowMs + " ms.");
             SyncUi();
         }
 
@@ -373,9 +374,9 @@ namespace WheelFix
 
             _enabledMenuItem.Checked = _settings.Enabled;
             _startupMenuItem.Checked = startupEnabled;
-            _lightMenuItem.Checked = _settings.WindowMs == 25;
-            _balancedMenuItem.Checked = _settings.WindowMs == 55;
-            _strongMenuItem.Checked = _settings.WindowMs == 90;
+            _lightMenuItem.Checked = _settings.WindowMs == 400;
+            _balancedMenuItem.Checked = _settings.WindowMs == 800;
+            _strongMenuItem.Checked = _settings.WindowMs == 1200;
             _notifyIcon.Text = _settings.Enabled
                 ? L.Text("WheelFix - filter enabled", "WheelFix - filtro attivo")
                 : L.Text("WheelFix - filter paused", "WheelFix - filtro in pausa");

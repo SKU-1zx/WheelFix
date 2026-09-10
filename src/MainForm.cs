@@ -91,8 +91,8 @@ namespace WheelFix
             sensitivityLabel.Font = new Font("Segoe UI Semibold", 9.5F,
                 FontStyle.Bold, GraphicsUnit.Point);
             sensitivityLabel.Text = L.Text(
-                "Debounce window",
-                "Finestra anti-rimbalzo");
+                "Burst direction lock",
+                "Blocco direzione della raffica");
             sensitivityLabel.Location = new Point(22, 145);
             Controls.Add(sensitivityLabel);
 
@@ -104,25 +104,25 @@ namespace WheelFix
             Controls.Add(_windowValueLabel);
 
             _windowTrackBar = new TrackBar();
-            _windowTrackBar.Minimum = 10;
-            _windowTrackBar.Maximum = 150;
-            _windowTrackBar.TickFrequency = 10;
-            _windowTrackBar.SmallChange = 5;
-            _windowTrackBar.LargeChange = 10;
+            _windowTrackBar.Minimum = 200;
+            _windowTrackBar.Maximum = 1500;
+            _windowTrackBar.TickFrequency = 100;
+            _windowTrackBar.SmallChange = 50;
+            _windowTrackBar.LargeChange = 100;
             _windowTrackBar.Size = new Size(482, 45);
             _windowTrackBar.Location = new Point(16, 169);
             _windowTrackBar.ValueChanged += WindowTrackBarValueChanged;
             Controls.Add(_windowTrackBar);
 
             _lightButton = CreatePresetButton(
-                L.Text("Light  25 ms", "Leggero  25 ms"), 22);
+                L.Text("Responsive  400 ms", "Rapido  400 ms"), 22);
             _balancedButton = CreatePresetButton(
-                L.Text("Balanced  55 ms", "Bilanciato  55 ms"), 180);
+                L.Text("Balanced  800 ms", "Bilanciato  800 ms"), 180);
             _strongButton = CreatePresetButton(
-                L.Text("Strong  90 ms", "Forte  90 ms"), 338);
-            _lightButton.Click += delegate { SetPreset(25); };
-            _balancedButton.Click += delegate { SetPreset(55); };
-            _strongButton.Click += delegate { SetPreset(90); };
+                L.Text("Aggressive  1200 ms", "Aggressivo  1200 ms"), 338);
+            _lightButton.Click += delegate { SetPreset(400); };
+            _balancedButton.Click += delegate { SetPreset(800); };
+            _strongButton.Click += delegate { SetPreset(1200); };
             Controls.Add(_lightButton);
             Controls.Add(_balancedButton);
             Controls.Add(_strongButton);
@@ -133,12 +133,12 @@ namespace WheelFix
             explanation.Location = new Point(23, 257);
             explanation.ForeColor = Color.FromArgb(75, 85, 99);
             explanation.Text = L.Text(
-                "A larger window catches slower bounce, but may discard the " +
-                    "first notch when you reverse direction very quickly. " +
-                    "Start with Balanced.",
-                "Più millisecondi eliminano rimbalzi più lenti, ma possono " +
-                    "scartare il primo scatto quando inverti direzione molto " +
-                    "velocemente. Parti da Bilanciato.");
+                "WheelFix keeps one direction until the wheel has been idle " +
+                    "for this long. To reverse, pause briefly first. Start " +
+                    "with Balanced.",
+                "WheelFix mantiene una direzione finché la rotellina non " +
+                    "resta ferma per questo tempo. Per invertire, fai prima " +
+                    "una breve pausa. Parti da Bilanciato.");
             Controls.Add(explanation);
 
             Panel separator = new Panel();

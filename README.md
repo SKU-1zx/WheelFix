@@ -5,10 +5,9 @@
 
 **A lightweight mouse-wheel debounce filter for Windows.**
 
-> Diagnostic preview: version `0.2.1-diagnostic.1` keeps the `0.2.0` filter
-> unchanged and temporarily records each vertical wheel event, its Windows
-> timestamp and whether it was allowed or blocked. Use it only to reproduce a
-> fault, then exit and share the log intentionally.
+> Experimental preview: version `0.3.0-preview.4` locks each continuous wheel
+> burst to its first direction. It is calibrated for a severely damaged
+> encoder and temporarily records every vertical-wheel decision.
 
 [Italiano](README.it.md)
 
@@ -22,8 +21,8 @@ applications receive them.
 ## Features
 
 - Global vertical-wheel filtering with no input delay in the normal direction.
-- Adjustable debounce window from 10 to 150 ms.
-- Light, Balanced and Strong presets.
+- Adjustable burst idle gap from 200 to 1500 ms.
+- Responsive, Balanced and Aggressive presets.
 - Counter showing how many bad pulses were blocked.
 - Notification-area controls and optional startup with Windows.
 - Local diagnostic log, available directly from the notification-area menu.
@@ -37,7 +36,7 @@ applications receive them.
    [Releases](https://github.com/SKU-1zx/WheelFix/releases/latest).
 2. Extract it to a stable folder.
 3. Run `WheelFix.exe`.
-4. Start with **Balanced (55 ms)** and use the wheel normally.
+4. Start with **Balanced (800 ms)** and use the wheel normally.
 
 Closing the window keeps WheelFix active in the notification area. Right-click
 its icon to pause the filter, change strength, enable startup, open the
@@ -45,15 +44,15 @@ diagnostic log or exit.
 
 ## Tuning
 
-| Preset | Window | Suggested use |
+| Preset | Idle gap | Suggested use |
 | --- | ---: | --- |
-| Light | 25 ms | Rare bounce or a wheel that improved after compressed air |
-| Balanced | 55 ms | Recommended starting point |
-| Strong | 90 ms | Frequent or slower bounce |
+| Responsive | 400 ms | Faster intentional reversals, less filtering |
+| Balanced | 800 ms | Recommended for the captured faulty encoder |
+| Aggressive | 1200 ms | Longer error bursts, slower intentional reversals |
 
-A larger window catches slower bounce, but it may discard the first notch when
-you intentionally reverse direction very quickly. A second consecutive notch
-in the new direction is accepted immediately.
+A wheel burst keeps its initial direction until no wheel events arrive for the
+selected idle gap. To reverse direction, pause the wheel briefly first. A
+larger gap blocks longer error runs but requires a longer pause.
 
 The **Bad pulses blocked** counter confirms whether the filter is actually
 intervening. If the counter increases while the unwanted jump disappears, the
@@ -62,9 +61,8 @@ setting is doing its job.
 ## How it works
 
 WheelFix installs a standard `WH_MOUSE_LL` user-mode hook and observes only
-vertical wheel messages. A pulse opposite to the most recently accepted
-direction is blocked when it arrives inside the selected debounce window.
-Another pulse in that new direction confirms a real reversal and is allowed.
+vertical wheel messages. The first event after an idle gap starts a burst;
+events in that direction pass immediately and every opposite event is blocked.
 
 Mouse movement, buttons, horizontal scrolling and injected events from other
 software are left untouched. WheelFix never calls `SendInput`.
@@ -76,7 +74,7 @@ Choose **Open diagnostic log** from the notification-area menu to open:
 `%LOCALAPPDATA%\WheelFix\WheelFix.log`
 
 The public release records WheelFix startup and shutdown, hook status, setting
-changes, errors and grouped counts of blocked pulses. This diagnostic preview
+changes, errors and grouped counts of blocked pulses. This experimental preview
 also records every vertical wheel delta and filter decision. It still does
 **not** record mouse movement, clicks or application names, and nothing is sent
 over the network. The file is reset automatically before it exceeds 1 MB.
@@ -87,6 +85,7 @@ over the network. The file is reset automatically before it exceeds 1 MB.
   may bypass a user-mode Windows hook.
 - WheelFix reduces symptoms caused by encoder bounce; it does not repair the
   physical encoder.
+- A real direction reversal is accepted only after the configured idle gap.
 - The current release filters the vertical wheel only.
 - The executable is not code-signed, so Windows may show a reputation warning
   on first launch.

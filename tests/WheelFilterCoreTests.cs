@@ -9,13 +9,13 @@ namespace WheelFix
         private static void Main()
         {
             FirstEventAndSameDirectionAreAllowed();
-            FastOppositePulseIsBlocked();
-            OriginalDirectionCancelsTheFalseReversal();
-            TwoOppositePulsesConfirmARealReversal();
-            SlowDirectionChangeIsAllowed();
+            EveryOppositePulseInsideBurstIsBlocked();
+            OppositePulsesKeepBurstLocked();
+            DirectionChangesAfterIdleGap();
             DisabledFilterAllowsEverything();
             TimestampWrapIsHandled();
             ChangingSettingsResetsHistory();
+            WindowSettingIsClamped();
 
             Console.WriteLine("OK - " + _testsRun + " tests passed.");
         }
@@ -28,43 +28,37 @@ namespace WheelFix
             AssertEqual(0L, filter.BlockedCount);
         }
 
-        private static void FastOppositePulseIsBlocked()
+        private static void EveryOppositePulseInsideBurstIsBlocked()
         {
             WheelFilterCore filter = NewFilter();
             filter.Process(-120, 100U);
             AssertDecision(WheelFilterDecision.Block, filter.Process(120, 130U));
-            AssertEqual(1L, filter.BlockedCount);
+            AssertDecision(WheelFilterDecision.Block, filter.Process(120, 500U));
+            AssertDecision(WheelFilterDecision.Block, filter.Process(120, 900U));
+            AssertDecision(WheelFilterDecision.Allow, filter.Process(-120, 950U));
+            AssertEqual(3L, filter.BlockedCount);
         }
 
-        private static void OriginalDirectionCancelsTheFalseReversal()
+        private static void OppositePulsesKeepBurstLocked()
         {
             WheelFilterCore filter = NewFilter();
             filter.Process(-120, 100U);
-            AssertDecision(WheelFilterDecision.Block, filter.Process(120, 115U));
-            AssertDecision(WheelFilterDecision.Allow, filter.Process(-120, 125U));
-            AssertDecision(WheelFilterDecision.Block, filter.Process(120, 140U));
+            AssertDecision(WheelFilterDecision.Block, filter.Process(120, 700U));
+            AssertDecision(WheelFilterDecision.Block, filter.Process(120, 1300U));
+            AssertDecision(WheelFilterDecision.Block, filter.Process(120, 1900U));
         }
 
-        private static void TwoOppositePulsesConfirmARealReversal()
+        private static void DirectionChangesAfterIdleGap()
         {
             WheelFilterCore filter = NewFilter();
             filter.Process(-120, 100U);
-            AssertDecision(WheelFilterDecision.Block, filter.Process(120, 120U));
-            AssertDecision(WheelFilterDecision.Allow, filter.Process(120, 135U));
-            AssertDecision(WheelFilterDecision.Allow, filter.Process(120, 150U));
-        }
-
-        private static void SlowDirectionChangeIsAllowed()
-        {
-            WheelFilterCore filter = NewFilter();
-            filter.Process(-120, 100U);
-            AssertDecision(WheelFilterDecision.Allow, filter.Process(120, 156U));
-            AssertEqual(0L, filter.BlockedCount);
+            AssertDecision(WheelFilterDecision.Allow, filter.Process(120, 901U));
+            AssertDecision(WheelFilterDecision.Allow, filter.Process(120, 920U));
         }
 
         private static void DisabledFilterAllowsEverything()
         {
-            WheelFilterCore filter = new WheelFilterCore(false, 55);
+            WheelFilterCore filter = new WheelFilterCore(false, 800);
             AssertDecision(WheelFilterDecision.Allow, filter.Process(-120, 100U));
             AssertDecision(WheelFilterDecision.Allow, filter.Process(120, 101U));
             AssertEqual(0L, filter.BlockedCount);
@@ -81,7 +75,7 @@ namespace WheelFix
         {
             WheelFilterCore filter = NewFilter();
             filter.Process(-120, 100U);
-            filter.WindowMs = 90;
+            filter.WindowMs = 1200;
             AssertDecision(WheelFilterDecision.Allow, filter.Process(120, 110U));
 
             filter.Enabled = false;
@@ -89,9 +83,17 @@ namespace WheelFix
             AssertDecision(WheelFilterDecision.Allow, filter.Process(-120, 120U));
         }
 
+        private static void WindowSettingIsClamped()
+        {
+            WheelFilterCore filter = new WheelFilterCore(true, 1);
+            AssertEqual(200L, filter.WindowMs);
+            filter.WindowMs = 9999;
+            AssertEqual(1500L, filter.WindowMs);
+        }
+
         private static WheelFilterCore NewFilter()
         {
-            return new WheelFilterCore(true, 55);
+            return new WheelFilterCore(true, 800);
         }
 
         private static void AssertDecision(
