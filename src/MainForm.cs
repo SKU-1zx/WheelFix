@@ -115,14 +115,14 @@ namespace WheelFix
             Controls.Add(_windowTrackBar);
 
             _lightButton = CreatePresetButton(
-                L.Text("Responsive  400 ms", "Rapido  400 ms"), 22);
+                L.Text("Responsive  250 ms", "Rapido  250 ms"), 22);
             _balancedButton = CreatePresetButton(
-                L.Text("Balanced  800 ms", "Bilanciato  800 ms"), 180);
+                L.Text("Balanced  400 ms", "Bilanciato  400 ms"), 180);
             _strongButton = CreatePresetButton(
-                L.Text("Aggressive  1200 ms", "Aggressivo  1200 ms"), 338);
-            _lightButton.Click += delegate { SetPreset(400); };
-            _balancedButton.Click += delegate { SetPreset(800); };
-            _strongButton.Click += delegate { SetPreset(1200); };
+                L.Text("Aggressive  800 ms", "Aggressivo  800 ms"), 338);
+            _lightButton.Click += delegate { SetPreset(250); };
+            _balancedButton.Click += delegate { SetPreset(400); };
+            _strongButton.Click += delegate { SetPreset(800); };
             Controls.Add(_lightButton);
             Controls.Add(_balancedButton);
             Controls.Add(_strongButton);

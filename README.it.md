@@ -5,10 +5,6 @@
 
 **Un filtro anti-rimbalzo leggero per la rotellina del mouse su Windows.**
 
-> Preview sperimentale: la versione `0.3.0-preview.4` blocca ogni raffica di
-> scroll sulla sua prima direzione. È calibrata per un encoder molto danneggiato
-> e registra temporaneamente ogni decisione sulla rotellina verticale.
-
 [English](README.md)
 
 ![Anteprima dell'interfaccia di WheelFix](docs/interface-preview.svg)
@@ -36,7 +32,7 @@ applicazioni Windows.
    [Releases](https://github.com/SKU-1zx/WheelFix/releases/latest).
 2. Estrailo in una cartella stabile.
 3. Avvia `WheelFix.exe`.
-4. Parti da **Bilanciato (800 ms)** e usa normalmente la rotellina.
+4. Parti da **Bilanciato (400 ms)** e usa normalmente la rotellina.
 
 Chiudendo la finestra WheelFix resta attivo nell'area di notifica. Con il tasto
 destro sull'icona puoi mettere in pausa il filtro, cambiare intensità, attivare
@@ -46,9 +42,9 @@ l'avvio automatico, aprire il log diagnostico o uscire.
 
 | Preset | Pausa | Quando usarlo |
 | --- | ---: | --- |
-| Rapido | 400 ms | Inversioni volontarie più rapide, filtro più debole |
-| Bilanciato | 800 ms | Consigliato per l'encoder analizzato nei log |
-| Aggressivo | 1200 ms | Errori più lunghi, inversioni volontarie più lente |
+| Rapido | 250 ms | Inversioni volontarie più rapide, filtro più debole |
+| Bilanciato | 400 ms | Valore predefinito verificato sul mouse reale |
+| Aggressivo | 800 ms | Errori più lunghi, inversioni volontarie più lente |
 
 Una raffica mantiene la direzione del primo evento finché non arrivano eventi
 per la pausa selezionata. Per invertire direzione, ferma brevemente la
@@ -73,11 +69,10 @@ Scegli **Apri log diagnostico** dal menu della tray per aprire:
 
 `%LOCALAPPDATA%\WheelFix\WheelFix.log`
 
-La release pubblica registra avvio e arresto di WheelFix, stato dell'hook,
-modifiche alle impostazioni, errori e conteggi raggruppati degli impulsi
-bloccati. Questa preview sperimentale registra anche ogni delta verticale e la
-decisione del filtro. Continua a **non** registrare movimenti del mouse, clic o
-nomi delle applicazioni e nulla viene inviato in rete. Il file viene azzerato
+Il log registra avvio e arresto di WheelFix, stato dell'hook, modifiche alle
+impostazioni, errori e conteggi raggruppati degli impulsi bloccati. **Non**
+registra singoli eventi della rotellina, movimenti del mouse, clic o nomi delle
+applicazioni e nulla viene inviato in rete. Il file viene azzerato
 automaticamente prima di superare 1 MB.
 
 ## Limiti
@@ -128,7 +123,8 @@ ed elimina la cartella. Se vuoi rimuovere anche il log diagnostico, elimina
 ## Contributi
 
 Una segnalazione è particolarmente utile se include modello del mouse, versione
-di Windows, applicazione interessata e finestra minima che risolve il problema.
+di Windows, applicazione interessata e blocco direzione minimo che risolve il
+problema.
 Il flusso di sviluppo è descritto in [CONTRIBUTING.md](CONTRIBUTING.md).
 
 ## Licenza

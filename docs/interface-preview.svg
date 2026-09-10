@@ -32,31 +32,31 @@
           font-weight="700">ACTIVE</text>
 
     <text x="38" y="255" fill="#111827" font-family="Segoe UI, Arial, sans-serif"
-          font-size="18" font-weight="600">Debounce window</text>
+          font-size="18" font-weight="600">Burst direction lock</text>
     <text x="800" y="255" text-anchor="end" fill="#374151"
-          font-family="Segoe UI, Arial, sans-serif" font-size="17">55 ms</text>
+          font-family="Segoe UI, Arial, sans-serif" font-size="17">400 ms</text>
 
     <rect x="44" y="287" width="744" height="6" rx="3" fill="#d1d5db" />
-    <rect x="44" y="287" width="260" height="6" rx="3" fill="#2563eb" />
-    <circle cx="304" cy="290" r="13" fill="#2563eb" stroke="#fff" stroke-width="4" />
+    <rect x="44" y="287" width="114" height="6" rx="3" fill="#2563eb" />
+    <circle cx="158" cy="290" r="13" fill="#2563eb" stroke="#fff" stroke-width="4" />
 
     <g font-family="Segoe UI, Arial, sans-serif" font-size="16" fill="#374151">
       <rect x="38" y="340" width="228" height="52" rx="6" fill="#fff"
             stroke="#c3cad5" />
-      <text x="152" y="373" text-anchor="middle">Light  25 ms</text>
+      <text x="152" y="373" text-anchor="middle">Responsive  250 ms</text>
       <rect x="306" y="340" width="228" height="52" rx="6" fill="#eff6ff"
             stroke="#2563eb" stroke-width="2" />
       <text x="420" y="373" text-anchor="middle" fill="#1d4ed8"
-            font-weight="600">Balanced  55 ms</text>
+            font-weight="600">Balanced  400 ms</text>
       <rect x="574" y="340" width="228" height="52" rx="6" fill="#fff"
             stroke="#c3cad5" />
-      <text x="688" y="373" text-anchor="middle">Strong  90 ms</text>
+      <text x="688" y="373" text-anchor="middle">Aggressive  800 ms</text>
     </g>
 
     <text x="38" y="440" fill="#4b5563" font-family="Segoe UI, Arial, sans-serif"
           font-size="16">
-      <tspan x="38">A larger window catches slower bounce, but may discard the first notch</tspan>
-      <tspan x="38" dy="25">when you reverse direction very quickly. Start with Balanced.</tspan>
+      <tspan x="38">One direction stays active until the wheel is idle for this long.</tspan>
+      <tspan x="38" dy="25">Pause briefly before reversing. Start with Balanced.</tspan>
     </text>
 
     <rect x="38" y="507" width="764" height="1" fill="#dce1e9" />

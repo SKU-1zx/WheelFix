@@ -5,10 +5,6 @@
 
 **A lightweight mouse-wheel debounce filter for Windows.**
 
-> Experimental preview: version `0.3.0-preview.4` locks each continuous wheel
-> burst to its first direction. It is calibrated for a severely damaged
-> encoder and temporarily records every vertical-wheel decision.
-
 [Italiano](README.it.md)
 
 ![WheelFix interface preview](docs/interface-preview.svg)
@@ -36,7 +32,7 @@ applications receive them.
    [Releases](https://github.com/SKU-1zx/WheelFix/releases/latest).
 2. Extract it to a stable folder.
 3. Run `WheelFix.exe`.
-4. Start with **Balanced (800 ms)** and use the wheel normally.
+4. Start with **Balanced (400 ms)** and use the wheel normally.
 
 Closing the window keeps WheelFix active in the notification area. Right-click
 its icon to pause the filter, change strength, enable startup, open the
@@ -46,9 +42,9 @@ diagnostic log or exit.
 
 | Preset | Idle gap | Suggested use |
 | --- | ---: | --- |
-| Responsive | 400 ms | Faster intentional reversals, less filtering |
-| Balanced | 800 ms | Recommended for the captured faulty encoder |
-| Aggressive | 1200 ms | Longer error bursts, slower intentional reversals |
+| Responsive | 250 ms | Faster intentional reversals, less filtering |
+| Balanced | 400 ms | Hardware-validated default |
+| Aggressive | 800 ms | Longer error bursts, slower intentional reversals |
 
 A wheel burst keeps its initial direction until no wheel events arrive for the
 selected idle gap. To reverse direction, pause the wheel briefly first. A
@@ -73,10 +69,9 @@ Choose **Open diagnostic log** from the notification-area menu to open:
 
 `%LOCALAPPDATA%\WheelFix\WheelFix.log`
 
-The public release records WheelFix startup and shutdown, hook status, setting
-changes, errors and grouped counts of blocked pulses. This experimental preview
-also records every vertical wheel delta and filter decision. It still does
-**not** record mouse movement, clicks or application names, and nothing is sent
+The log records WheelFix startup and shutdown, hook status, setting changes,
+errors and grouped counts of blocked pulses. It does **not** record individual
+wheel events, mouse movement, clicks or application names, and nothing is sent
 over the network. The file is reset automatically before it exceeds 1 MB.
 
 ## Limitations
@@ -127,7 +122,7 @@ want to remove the diagnostic log.
 ## Contributing
 
 Bug reports are especially useful when they include the mouse model, Windows
-version, affected application and the smallest debounce value that works. See
+version, affected application and the smallest direction-lock value that works. See
 [CONTRIBUTING.md](CONTRIBUTING.md) for the development workflow.
 
 ## License

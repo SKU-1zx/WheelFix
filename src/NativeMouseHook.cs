@@ -1,5 +1,4 @@
 using System;
-using System.Collections.Concurrent;
 using System.ComponentModel;
 using System.Runtime.InteropServices;
 
@@ -13,7 +12,6 @@ namespace WheelFix
 
         private readonly WheelFilterCore _filter;
         private readonly NativeMethods.LowLevelMouseProc _callback;
-        private readonly ConcurrentQueue<WheelTraceEvent> _traceEvents;
         private IntPtr _hookHandle;
 
         public NativeMouseHook(WheelFilterCore filter)
@@ -25,13 +23,7 @@ namespace WheelFix
 
             _filter = filter;
             _callback = HookCallback;
-            _traceEvents = new ConcurrentQueue<WheelTraceEvent>();
             _hookHandle = IntPtr.Zero;
-        }
-
-        public bool TryDequeueTrace(out WheelTraceEvent traceEvent)
-        {
-            return _traceEvents.TryDequeue(out traceEvent);
         }
 
         public void Start()
@@ -78,12 +70,8 @@ namespace WheelFix
                 if ((data.Flags & LlmhfInjected) == 0U)
                 {
                     int delta = unchecked((short)(data.MouseData >> 16));
-                    WheelFilterDecision decision =
-                        _filter.Process(delta, data.Time);
-                    _traceEvents.Enqueue(new WheelTraceEvent(
-                        data.Time, delta, decision));
 
-                    if (decision == WheelFilterDecision.Block)
+                    if (_filter.Process(delta, data.Time) == WheelFilterDecision.Block)
                     {
                         return new IntPtr(1);
                     }
@@ -91,23 +79,6 @@ namespace WheelFix
             }
 
             return NativeMethods.CallNextHookEx(_hookHandle, nCode, wParam, lParam);
-        }
-    }
-
-    internal struct WheelTraceEvent
-    {
-        internal readonly uint Timestamp;
-        internal readonly int Delta;
-        internal readonly WheelFilterDecision Decision;
-
-        internal WheelTraceEvent(
-            uint timestamp,
-            int delta,
-            WheelFilterDecision decision)
-        {
-            Timestamp = timestamp;
-            Delta = delta;
-            Decision = decision;
         }
     }
 

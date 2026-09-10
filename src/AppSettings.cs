@@ -16,7 +16,7 @@ namespace WheelFix
         {
             AppSettings settings = new AppSettings();
             settings.Enabled = true;
-            settings.WindowMs = 800;
+            settings.WindowMs = 400;
 
             try
             {
@@ -26,7 +26,7 @@ namespace WheelFix
                     {
                         settings.Enabled = ReadInt(key, "Enabled", 1) != 0;
                         settings.WindowMs = Math.Max(200, Math.Min(1500,
-                            ReadInt(key, "BurstGapMs", 800)));
+                            ReadInt(key, "BurstGapMs", 400)));
                     }
                 }
             }

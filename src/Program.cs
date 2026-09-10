@@ -1,7 +1,6 @@
 using System;
 using System.Drawing;
 using System.Reflection;
-using System.Text;
 using System.Threading;
 using System.Windows.Forms;
 
@@ -12,7 +11,7 @@ using System.Windows.Forms;
 [assembly: AssemblyCopyright("Copyright © 2026 SKU-1zx")]
 [assembly: AssemblyVersion("0.3.0.0")]
 [assembly: AssemblyFileVersion("0.3.0.0")]
-[assembly: AssemblyInformationalVersion("0.3.0-preview.4")]
+[assembly: AssemblyInformationalVersion("0.3.0")]
 
 namespace WheelFix
 {
@@ -127,11 +126,11 @@ namespace WheelFix
             ToolStripMenuItem sensitivityMenu =
                 new ToolStripMenuItem(L.Text("Direction lock", "Blocco direzione"));
             _lightMenuItem = CreatePresetMenuItem(
-                L.Text("Responsive (400 ms)", "Rapido (400 ms)"), 400);
+                L.Text("Responsive (250 ms)", "Rapido (250 ms)"), 250);
             _balancedMenuItem = CreatePresetMenuItem(
-                L.Text("Balanced (800 ms)", "Bilanciato (800 ms)"), 800);
+                L.Text("Balanced (400 ms)", "Bilanciato (400 ms)"), 400);
             _strongMenuItem = CreatePresetMenuItem(
-                L.Text("Aggressive (1200 ms)", "Aggressivo (1200 ms)"), 1200);
+                L.Text("Aggressive (800 ms)", "Aggressivo (800 ms)"), 800);
             sensitivityMenu.DropDownItems.Add(_lightMenuItem);
             sensitivityMenu.DropDownItems.Add(_balancedMenuItem);
             sensitivityMenu.DropDownItems.Add(_strongMenuItem);
@@ -178,7 +177,6 @@ namespace WheelFix
                 }
 
                 _lastLoggedBlockedCount = blocked;
-                FlushWheelTrace();
             };
             _statsTimer.Start();
 
@@ -201,7 +199,6 @@ namespace WheelFix
                     "WheelFix stopping; blocked_total=" +
                     _filter.BlockedCount + ".");
                 _statsTimer.Stop();
-                FlushWheelTrace();
                 _statsTimer.Dispose();
                 _notifyIcon.Visible = false;
                 _notifyIcon.Dispose();
@@ -214,39 +211,6 @@ namespace WheelFix
             }
 
             base.ExitThreadCore();
-        }
-
-        private void FlushWheelTrace()
-        {
-            WheelTraceEvent traceEvent;
-            StringBuilder line = null;
-
-            while (_mouseHook.TryDequeueTrace(out traceEvent))
-            {
-                if (line == null)
-                {
-                    line = new StringBuilder("Wheel events:");
-                }
-                else if (line.Length > 3500)
-                {
-                    DiagnosticLog.Write(line.ToString());
-                    line.Length = 0;
-                    line.Append("Wheel events:");
-                }
-
-                line.Append(" t=")
-                    .Append(traceEvent.Timestamp)
-                    .Append(" d=")
-                    .Append(traceEvent.Delta)
-                    .Append(traceEvent.Decision == WheelFilterDecision.Block
-                        ? " BLOCK"
-                        : " ALLOW");
-            }
-
-            if (line != null)
-            {
-                DiagnosticLog.Write(line.ToString());
-            }
         }
 
         private ToolStripMenuItem CreatePresetMenuItem(string text, int windowMs)
@@ -374,9 +338,9 @@ namespace WheelFix
 
             _enabledMenuItem.Checked = _settings.Enabled;
             _startupMenuItem.Checked = startupEnabled;
-            _lightMenuItem.Checked = _settings.WindowMs == 400;
-            _balancedMenuItem.Checked = _settings.WindowMs == 800;
-            _strongMenuItem.Checked = _settings.WindowMs == 1200;
+            _lightMenuItem.Checked = _settings.WindowMs == 250;
+            _balancedMenuItem.Checked = _settings.WindowMs == 400;
+            _strongMenuItem.Checked = _settings.WindowMs == 800;
             _notifyIcon.Text = _settings.Enabled
                 ? L.Text("WheelFix - filter enabled", "WheelFix - filtro attivo")
                 : L.Text("WheelFix - filter paused", "WheelFix - filtro in pausa");

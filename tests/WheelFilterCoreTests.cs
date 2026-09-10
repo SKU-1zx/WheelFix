@@ -50,8 +50,9 @@ namespace WheelFix
 
         private static void DirectionChangesAfterIdleGap()
         {
-            WheelFilterCore filter = NewFilter();
+            WheelFilterCore filter = new WheelFilterCore(true, 400);
             filter.Process(-120, 100U);
+            AssertDecision(WheelFilterDecision.Block, filter.Process(120, 500U));
             AssertDecision(WheelFilterDecision.Allow, filter.Process(120, 901U));
             AssertDecision(WheelFilterDecision.Allow, filter.Process(120, 920U));
         }
