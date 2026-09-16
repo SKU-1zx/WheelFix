@@ -12,7 +12,7 @@ using System.Windows.Forms;
 [assembly: AssemblyCopyright("Copyright © 2026 SKU-1zx")]
 [assembly: AssemblyVersion("0.3.1.0")]
 [assembly: AssemblyFileVersion("0.3.1.0")]
-[assembly: AssemblyInformationalVersion("0.3.1-preview.2")]
+[assembly: AssemblyInformationalVersion("0.3.1-preview.3")]
 
 namespace WheelFix
 {
