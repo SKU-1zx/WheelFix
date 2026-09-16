@@ -82,10 +82,9 @@ namespace WheelFix
 
             int direction = delta > 0 ? 1 : -1;
 
-            // ponytail: Windows exposes decoded wheel deltas, not the encoder
-            // phases, so opposite intent and severe bounce are indistinguishable
-            // mid-burst. The deliberate ceiling is that a real reversal needs
-            // an idle pause; raw device data is the upgrade path.
+            // ponytail: the configured value is the complete policy. Do not
+            // silently extend it after a blocked pulse: that made an intentional
+            // reversal require a much longer pause than the UI reported.
             if (!_hasLastEvent ||
                 Elapsed(timestamp, _lastEventTime) > (uint)_windowMs)
             {

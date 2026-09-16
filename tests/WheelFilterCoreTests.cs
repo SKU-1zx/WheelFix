@@ -11,7 +11,8 @@ namespace WheelFix
             FirstEventAndSameDirectionAreAllowed();
             EveryOppositePulseInsideBurstIsBlocked();
             OppositePulsesKeepBurstLocked();
-            DirectionChangesAfterIdleGap();
+            CleanBurstChangesDirectionAfterConfiguredIdleGap();
+            BlockedPulseDoesNotExtendConfiguredIdleGap();
             DisabledFilterAllowsEverything();
             TimestampWrapIsHandled();
             ChangingSettingsResetsHistory();
@@ -48,13 +49,22 @@ namespace WheelFix
             AssertDecision(WheelFilterDecision.Block, filter.Process(120, 1900U));
         }
 
-        private static void DirectionChangesAfterIdleGap()
+        private static void CleanBurstChangesDirectionAfterConfiguredIdleGap()
         {
             WheelFilterCore filter = new WheelFilterCore(true, 400);
             filter.Process(-120, 100U);
-            AssertDecision(WheelFilterDecision.Block, filter.Process(120, 500U));
+            AssertDecision(WheelFilterDecision.Allow, filter.Process(-120, 500U));
             AssertDecision(WheelFilterDecision.Allow, filter.Process(120, 901U));
             AssertDecision(WheelFilterDecision.Allow, filter.Process(120, 920U));
+        }
+
+        private static void BlockedPulseDoesNotExtendConfiguredIdleGap()
+        {
+            WheelFilterCore filter = new WheelFilterCore(true, 400);
+            AssertDecision(WheelFilterDecision.Allow, filter.Process(-120, 100U));
+            AssertDecision(WheelFilterDecision.Block, filter.Process(120, 116U));
+            AssertDecision(WheelFilterDecision.Allow, filter.Process(120, 517U));
+            AssertDecision(WheelFilterDecision.Allow, filter.Process(120, 530U));
         }
 
         private static void DisabledFilterAllowsEverything()
