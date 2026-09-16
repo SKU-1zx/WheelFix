@@ -12,7 +12,7 @@ using System.Windows.Forms;
 [assembly: AssemblyCopyright("Copyright © 2026 SKU-1zx")]
 [assembly: AssemblyVersion("0.3.1.0")]
 [assembly: AssemblyFileVersion("0.3.1.0")]
-[assembly: AssemblyInformationalVersion("0.3.1-preview.1")]
+[assembly: AssemblyInformationalVersion("0.3.1-preview.2")]
 
 namespace WheelFix
 {
@@ -237,10 +237,20 @@ namespace WheelFix
                 line.Append(" t=")
                     .Append(traceEvent.Timestamp)
                     .Append(" d=")
-                    .Append(traceEvent.Delta)
-                    .Append(traceEvent.Decision == WheelFilterDecision.Block
-                        ? " BLOCK"
-                        : " ALLOW");
+                    .Append(traceEvent.Delta);
+
+                if (traceEvent.IsInjected)
+                {
+                    line.Append(" INJECTED-BYPASS flags=0x")
+                        .Append(traceEvent.Flags.ToString("X8"));
+                }
+                else
+                {
+                    line.Append(
+                        traceEvent.Decision == WheelFilterDecision.Block
+                            ? " BLOCK"
+                            : " ALLOW");
+                }
             }
 
             if (line != null)
