@@ -24,6 +24,7 @@ namespace WheelFix
         private int _burstDirection;
         private uint _lastEventTime;
         private bool _hasLastEvent;
+        private bool _noisyBurst;
         private long _blockedCount;
 
         public WheelFilterCore(bool enabled, int windowMs)
@@ -82,16 +83,21 @@ namespace WheelFix
 
             int direction = delta > 0 ? 1 : -1;
 
+            uint idleWindowMs = _noisyBurst
+                ? (uint)MaximumWindowMs
+                : (uint)_windowMs;
+
             // ponytail: Windows exposes decoded wheel deltas, not the encoder
-            // phases, so opposite intent and severe bounce are indistinguishable
-            // mid-burst. The deliberate ceiling is that a real reversal needs
-            // an idle pause; raw device data is the upgrade path.
+            // phases. Once a rejected pulse proves a burst is noisy, preserve
+            // its direction across longer gaps. The deliberate ceiling is the
+            // first event after a full idle; raw device data is the upgrade path.
             if (!_hasLastEvent ||
-                Elapsed(timestamp, _lastEventTime) > (uint)_windowMs)
+                Elapsed(timestamp, _lastEventTime) > idleWindowMs)
             {
                 _burstDirection = direction;
                 _lastEventTime = timestamp;
                 _hasLastEvent = true;
+                _noisyBurst = false;
                 return WheelFilterDecision.Allow;
             }
 
@@ -106,6 +112,7 @@ namespace WheelFix
                 return WheelFilterDecision.Allow;
             }
 
+            _noisyBurst = true;
             Interlocked.Increment(ref _blockedCount);
             return WheelFilterDecision.Block;
         }
@@ -115,6 +122,7 @@ namespace WheelFix
             _burstDirection = 0;
             _lastEventTime = 0U;
             _hasLastEvent = false;
+            _noisyBurst = false;
         }
 
         private static uint Elapsed(uint current, uint previous)
