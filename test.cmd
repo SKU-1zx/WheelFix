@@ -20,6 +20,9 @@ if not exist "dist" mkdir "dist"
   /out:dist\WheelFilterCoreTests.exe ^
   /reference:System.dll ^
   src\WheelFilterCore.cs ^
+  src\NativeMouseHook.cs ^
+  src\DiagnosticLog.cs ^
+  src\Localization.cs ^
   tests\WheelFilterCoreTests.cs
 
 if errorlevel 1 (

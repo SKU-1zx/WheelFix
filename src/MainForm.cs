@@ -104,9 +104,9 @@ namespace WheelFix
             Controls.Add(_windowValueLabel);
 
             _windowTrackBar = new TrackBar();
-            _windowTrackBar.Minimum = 200;
-            _windowTrackBar.Maximum = 1500;
-            _windowTrackBar.TickFrequency = 100;
+            _windowTrackBar.Minimum = 400;
+            _windowTrackBar.Maximum = 500;
+            _windowTrackBar.TickFrequency = 50;
             _windowTrackBar.SmallChange = 50;
             _windowTrackBar.LargeChange = 100;
             _windowTrackBar.Size = new Size(482, 45);
@@ -115,14 +115,14 @@ namespace WheelFix
             Controls.Add(_windowTrackBar);
 
             _lightButton = CreatePresetButton(
-                L.Text("Responsive  250 ms", "Rapido  250 ms"), 22);
+                L.Text("Responsive  400 ms", "Rapido  400 ms"), 22);
             _balancedButton = CreatePresetButton(
-                L.Text("Balanced  400 ms", "Bilanciato  400 ms"), 180);
+                L.Text("Balanced  450 ms", "Bilanciato  450 ms"), 180);
             _strongButton = CreatePresetButton(
-                L.Text("Aggressive  800 ms", "Aggressivo  800 ms"), 338);
-            _lightButton.Click += delegate { SetPreset(250); };
-            _balancedButton.Click += delegate { SetPreset(400); };
-            _strongButton.Click += delegate { SetPreset(800); };
+                L.Text("Aggressive  500 ms", "Aggressivo  500 ms"), 338);
+            _lightButton.Click += delegate { SetPreset(400); };
+            _balancedButton.Click += delegate { SetPreset(450); };
+            _strongButton.Click += delegate { SetPreset(500); };
             Controls.Add(_lightButton);
             Controls.Add(_balancedButton);
             Controls.Add(_strongButton);
@@ -159,8 +159,8 @@ namespace WheelFix
             Label blockedLabel = new Label();
             blockedLabel.AutoSize = true;
             blockedLabel.Text = L.Text(
-                "Bad pulses blocked:",
-                "Impulsi errati bloccati:");
+                "Contrary pulses corrected:",
+                "Impulsi contrari corretti:");
             blockedLabel.Location = new Point(22, 370);
             Controls.Add(blockedLabel);
 

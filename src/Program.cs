@@ -9,9 +9,9 @@ using System.Windows.Forms;
 [assembly: AssemblyCompany("SKU-1zx")]
 [assembly: AssemblyProduct("WheelFix")]
 [assembly: AssemblyCopyright("Copyright © 2026 SKU-1zx")]
-[assembly: AssemblyVersion("0.3.0.0")]
-[assembly: AssemblyFileVersion("0.3.0.0")]
-[assembly: AssemblyInformationalVersion("0.3.0")]
+[assembly: AssemblyVersion("0.3.2.0")]
+[assembly: AssemblyFileVersion("0.3.2.0")]
+[assembly: AssemblyInformationalVersion("0.3.2-preview.1")]
 
 namespace WheelFix
 {
@@ -126,11 +126,11 @@ namespace WheelFix
             ToolStripMenuItem sensitivityMenu =
                 new ToolStripMenuItem(L.Text("Direction lock", "Blocco direzione"));
             _lightMenuItem = CreatePresetMenuItem(
-                L.Text("Responsive (250 ms)", "Rapido (250 ms)"), 250);
+                L.Text("Responsive (400 ms)", "Rapido (400 ms)"), 400);
             _balancedMenuItem = CreatePresetMenuItem(
-                L.Text("Balanced (400 ms)", "Bilanciato (400 ms)"), 400);
+                L.Text("Balanced (450 ms)", "Bilanciato (450 ms)"), 450);
             _strongMenuItem = CreatePresetMenuItem(
-                L.Text("Aggressive (800 ms)", "Aggressivo (800 ms)"), 800);
+                L.Text("Aggressive (500 ms)", "Aggressivo (500 ms)"), 500);
             sensitivityMenu.DropDownItems.Add(_lightMenuItem);
             sensitivityMenu.DropDownItems.Add(_balancedMenuItem);
             sensitivityMenu.DropDownItems.Add(_strongMenuItem);
@@ -165,13 +165,14 @@ namespace WheelFix
             _statsTimer.Interval = 250;
             _statsTimer.Tick += delegate
             {
+                _mouseHook.FlushTrace();
                 long blocked = _filter.BlockedCount;
                 _form.UpdateBlockedCount(blocked);
 
                 if (blocked > _lastLoggedBlockedCount)
                 {
                     DiagnosticLog.Write(
-                        "Blocked bad pulses: delta=" +
+                        "Corrected contrary pulses: delta=" +
                         (blocked - _lastLoggedBlockedCount) +
                         "; total=" + blocked + ".");
                 }
@@ -204,6 +205,7 @@ namespace WheelFix
                 _notifyIcon.Dispose();
                 _menu.Dispose();
                 _mouseHook.Dispose();
+                _mouseHook.FlushTrace();
                 DiagnosticLog.Write("Global mouse hook removed.");
                 _form.Dispose();
                 _icon.Dispose();
@@ -226,7 +228,7 @@ namespace WheelFix
             _filter.Enabled = enabled;
             SaveSettings();
             DiagnosticLog.Write(
-                enabled ? "Filter enabled." : "Filter paused.");
+                enabled ? "Filter enabled; state=IDLE." : "Filter paused; state=IDLE.");
             SyncUi();
         }
 
@@ -237,7 +239,7 @@ namespace WheelFix
             SaveSettings();
             DiagnosticLog.Write(
                 "Burst direction lock changed to " +
-                _settings.WindowMs + " ms.");
+                _settings.WindowMs + " ms; state=IDLE.");
             SyncUi();
         }
 
@@ -338,9 +340,9 @@ namespace WheelFix
 
             _enabledMenuItem.Checked = _settings.Enabled;
             _startupMenuItem.Checked = startupEnabled;
-            _lightMenuItem.Checked = _settings.WindowMs == 250;
-            _balancedMenuItem.Checked = _settings.WindowMs == 400;
-            _strongMenuItem.Checked = _settings.WindowMs == 800;
+            _lightMenuItem.Checked = _settings.WindowMs == 400;
+            _balancedMenuItem.Checked = _settings.WindowMs == 450;
+            _strongMenuItem.Checked = _settings.WindowMs == 500;
             _notifyIcon.Text = _settings.Enabled
                 ? L.Text("WheelFix - filter enabled", "WheelFix - filtro attivo")
                 : L.Text("WheelFix - filter paused", "WheelFix - filtro in pausa");

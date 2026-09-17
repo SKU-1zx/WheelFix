@@ -3,27 +3,24 @@ using System.Threading;
 
 namespace WheelFix
 {
-    internal enum WheelFilterDecision
+    internal enum WheelFilterState { IDLE, LOCK_UP, LOCK_DOWN }
+
+    internal struct WheelFilterResult
     {
-        Allow,
-        Block
+        internal int OutputDelta;
+        internal WheelFilterState State;
+        internal uint? GapMs;
+        internal bool ResetToIdle;
+        internal string Reason;
     }
 
-    /// <summary>
-    /// Filters the short, opposite-direction pulses produced by a worn
-    /// mechanical wheel encoder. The class is deliberately independent from
-    /// WinForms and the Windows hook so that its behaviour can be tested.
-    /// </summary>
+    // Owned by the hook/UI message-loop thread. No timers, replay or voting.
     internal sealed class WheelFilterCore
     {
-        private const int MinimumWindowMs = 200;
-        private const int MaximumWindowMs = 1500;
-
+        internal const int DefaultWindowMs = 450;
         private bool _enabled;
         private int _windowMs;
-        private int _burstDirection;
         private uint _lastEventTime;
-        private bool _hasLastEvent;
         private long _blockedCount;
 
         public WheelFilterCore(bool enabled, int windowMs)
@@ -32,16 +29,13 @@ namespace WheelFix
             _windowMs = ClampWindow(windowMs);
         }
 
+        public WheelFilterState State { get; private set; }
         public bool Enabled
         {
             get { return _enabled; }
             set
             {
-                if (_enabled == value)
-                {
-                    return;
-                }
-
+                if (_enabled == value) return;
                 _enabled = value;
                 ResetHistory();
             }
@@ -53,80 +47,70 @@ namespace WheelFix
             set
             {
                 int clamped = ClampWindow(value);
-                if (_windowMs == clamped)
-                {
-                    return;
-                }
-
+                if (_windowMs == clamped) return;
                 _windowMs = clamped;
                 ResetHistory();
             }
         }
 
-        public long BlockedCount
-        {
-            get { return Interlocked.Read(ref _blockedCount); }
-        }
+        // Kept for existing UI callers: counts suppressed contrary originals,
+        // each of which is now replaced with a corrected pulse.
+        public long BlockedCount { get { return Interlocked.Read(ref _blockedCount); } }
+        public void ResetBlockedCount() { Interlocked.Exchange(ref _blockedCount, 0L); }
 
-        public void ResetBlockedCount()
+        public WheelFilterResult Process(int delta, uint timestamp)
         {
-            Interlocked.Exchange(ref _blockedCount, 0L);
-        }
-
-        public WheelFilterDecision Process(int delta, uint timestamp)
-        {
+            WheelFilterResult result = new WheelFilterResult();
+            result.OutputDelta = delta;
+            result.State = State;
             if (!_enabled || delta == 0)
             {
-                return WheelFilterDecision.Allow;
+                result.Reason = !_enabled ? "filter_paused" : "zero_delta";
+                return result;
             }
 
-            int direction = delta > 0 ? 1 : -1;
-
-            // ponytail: Windows exposes decoded wheel deltas, not the encoder
-            // phases, so opposite intent and severe bounce are indistinguishable
-            // mid-burst. The deliberate ceiling is that a real reversal needs
-            // an idle pause; raw device data is the upgrade path.
-            if (!_hasLastEvent ||
-                Elapsed(timestamp, _lastEventTime) > (uint)_windowMs)
+            if (State != WheelFilterState.IDLE)
             {
-                _burstDirection = direction;
-                _lastEventTime = timestamp;
-                _hasLastEvent = true;
-                return WheelFilterDecision.Allow;
+                // Windows event timestamps share a wrapping 32-bit clock.
+                uint gap = unchecked(timestamp - _lastEventTime);
+                result.GapMs = gap;
+                if (gap >= (uint)_windowMs)
+                {
+                    // Expiration is evaluated before the next physical event.
+                    // No timer can race a queued event or extend the deadline.
+                    ResetHistory();
+                    result.ResetToIdle = true;
+                }
             }
 
-            // Every physical wheel event keeps the current burst alive. This
-            // matters when a damaged encoder emits several wrong pulses: they
-            // must not become a new direction merely because the last good
-            // pulse is older than the idle gap.
+            bool newGesture = State == WheelFilterState.IDLE;
+            if (newGesture)
+                State = delta > 0 ? WheelFilterState.LOCK_UP : WheelFilterState.LOCK_DOWN;
+
+            // ALL nonzero physical pulses refresh the deadline, including
+            // arbitrarily long runs of contrary pulses. Magnitude is preserved.
             _lastEventTime = timestamp;
-
-            if (direction == _burstDirection)
+            int direction = State == WheelFilterState.LOCK_UP ? 1 : -1;
+            result.OutputDelta = direction * Math.Abs(delta);
+            result.State = State;
+            result.Reason = newGesture ? "gesture_start" : "same_direction";
+            if (result.OutputDelta != delta)
             {
-                return WheelFilterDecision.Allow;
+                Interlocked.Increment(ref _blockedCount);
+                result.Reason = "corrected_to_lock";
             }
-
-            Interlocked.Increment(ref _blockedCount);
-            return WheelFilterDecision.Block;
+            return result;
         }
 
         private void ResetHistory()
         {
-            _burstDirection = 0;
+            State = WheelFilterState.IDLE;
             _lastEventTime = 0U;
-            _hasLastEvent = false;
-        }
-
-        private static uint Elapsed(uint current, uint previous)
-        {
-            // uint subtraction intentionally handles the 32-bit Windows tick
-            // counter wrapping roughly every 49.7 days.
-            return unchecked(current - previous);
         }
 
         private static int ClampWindow(int value)
         {
-            return Math.Max(MinimumWindowMs, Math.Min(MaximumWindowMs, value));
+            return Math.Max(400, Math.Min(500, value));
         }
     }
 }

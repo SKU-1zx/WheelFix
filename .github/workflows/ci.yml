@@ -17,10 +17,6 @@ jobs:
       - name: Check out repository
         uses: actions/checkout@v7
 
-      - name: Run filter-core tests
-        shell: cmd
-        run: test.cmd --ci
-
       - name: Build portable executable
         shell: cmd
         run: build.cmd --ci
@@ -31,6 +27,10 @@ jobs:
       - name: Validate Visual Studio project
         shell: cmd
         run: msbuild WheelFix.csproj /t:Rebuild /p:Configuration=Release
+
+      - name: Run filter and hook-routing tests once after successful builds
+        shell: cmd
+        run: test.cmd --ci
 
       - name: Upload Windows build
         uses: actions/upload-artifact@v7
