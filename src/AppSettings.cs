@@ -16,7 +16,7 @@ namespace WheelFix
         {
             AppSettings settings = new AppSettings();
             settings.Enabled = true;
-            settings.WindowMs = 400;
+            settings.WindowMs = WheelFilterCore.DefaultWindowMs;
 
             try
             {
@@ -25,8 +25,8 @@ namespace WheelFix
                     if (key != null)
                     {
                         settings.Enabled = ReadInt(key, "Enabled", 1) != 0;
-                        settings.WindowMs = Math.Max(200, Math.Min(1500,
-                            ReadInt(key, "BurstGapMs", 400)));
+                        settings.WindowMs = Math.Max(400, Math.Min(500,
+                            ReadInt(key, "GestureGapMs", WheelFilterCore.DefaultWindowMs)));
                     }
                 }
             }
@@ -54,7 +54,7 @@ namespace WheelFix
                 }
 
                 key.SetValue("Enabled", Enabled ? 1 : 0, RegistryValueKind.DWord);
-                key.SetValue("BurstGapMs", WindowMs, RegistryValueKind.DWord);
+                key.SetValue("GestureGapMs", WindowMs, RegistryValueKind.DWord);
             }
         }
 
